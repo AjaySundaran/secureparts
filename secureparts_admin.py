@@ -2,7 +2,7 @@
 SECURE PARTS® — Central User Telemetry & Identity Console
 Desktop Application built with PyQt6
 Allows administrators to view, monitor, search, and export all registered users (Google SSO & Enterprise)
-Includes a built-in background sync receiver and cloud sync integration.
+Includes built-in background HTTPS Cloud Telemetry receiver, local sync receiver, and file import/export.
 """
 
 import sys
@@ -12,6 +12,7 @@ import time
 import socket
 import sqlite3
 import threading
+import urllib.request
 from datetime import datetime
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
@@ -19,13 +20,14 @@ from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QPushButton, QLineEdit, QTableWidget, QTableWidgetItem,
     QHeaderView, QFileDialog, QMessageBox, QComboBox, QFrame,
-    QDialog, QFormLayout, QDialogButtonBox, QStatusBar, QGraphicsDropShadowEffect
+    QDialog, QFormLayout, QDialogButtonBox, QStatusBar
 )
-from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QObject
-from PyQt6.QtGui import QColor, QFont, QIcon, QPainter, QBrush, QPen
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QObject, QThread
+from PyQt6.QtGui import QColor, QFont
 
 DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "users.db")
 CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "desktop_config.json")
+CLOUD_TOPIC = "secureparts-telemetry-ajaysundaran"
 
 def get_local_ip():
     try:
@@ -58,7 +60,6 @@ def init_database():
             last_login TEXT
         )
     """)
-    # Check if device column exists
     c.execute("PRAGMA table_info(users)")
     cols = [col[1] for col in c.fetchall()]
     if 'device' not in cols:
@@ -77,7 +78,7 @@ def init_database():
             "sys_master_001",
             "Dr. Sarah Chen",
             "lead.engineer@defense.gov",
-            "",
+            "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=faces",
             "enterprise",
             "Department of Defense / AS9100D Oversight",
             "Top Secret / SCI",
@@ -98,13 +99,13 @@ def save_user_record(user_dict):
     if not email:
         conn.close()
         return False
-    name = user_dict.get("name") or email.split("@")[0].title()
+    name = user_dict.get("name") or email.split("@")[0].replace(".", " ").title()
     picture = user_dict.get("picture") or user_dict.get("avatar_url") or ""
     provider = user_dict.get("provider") or "google"
     org = user_dict.get("organization") or ("Google Workspace Verified" if provider == "google" else "Enterprise Client")
     clearance = user_dict.get("clearance") or "Level 3 - Forensic Access"
     role = user_dict.get("role") or "Hardware Systems Auditor"
-    device = user_dict.get("device") or "Web"
+    device = user_dict.get("device") or "Desktop"
     created_at = user_dict.get("created_at") or now_iso
 
     c.execute("""
@@ -142,6 +143,59 @@ class SyncSignalEmitter(QObject):
     user_received = pyqtSignal(dict)
 
 SYNC_SIGNALS = SyncSignalEmitter()
+
+
+class CloudSyncThread(QThread):
+    user_synced = pyqtSignal(dict)
+    status_updated = pyqtSignal(str)
+
+    def __init__(self, topic=CLOUD_TOPIC):
+        super().__init__()
+        self.topic = topic
+        self.is_running = True
+        self.processed_ids = set()
+
+    def run(self):
+        self.status_updated.emit("Fetching cloud backlog...")
+        self.fetch_messages(since="all")
+        self.status_updated.emit("Cloud Synced (Live)")
+
+        while self.is_running:
+            time.sleep(3)
+            if not self.is_running:
+                break
+            self.fetch_messages(since="10m")
+
+    def fetch_messages(self, since="10m"):
+        url = f"https://ntfy.sh/{self.topic}/json?poll=1&since={since}"
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "SecurePartsAdmin/1.0"})
+            with urllib.request.urlopen(req, timeout=10) as res:
+                content = res.read().decode("utf-8")
+                for line in content.strip().split("\n"):
+                    if not line:
+                        continue
+                    try:
+                        obj = json.loads(line)
+                        msg_id = obj.get("id")
+                        if msg_id and msg_id in self.processed_ids:
+                            continue
+                        if msg_id:
+                            self.processed_ids.add(msg_id)
+
+                        if obj.get("event") == "message" and obj.get("message"):
+                            raw = obj.get("message")
+                            user_data = json.loads(raw)
+                            if isinstance(user_data, dict) and user_data.get("email"):
+                                save_user_record(user_data)
+                                self.user_synced.emit(user_data)
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+
+    def stop(self):
+        self.is_running = False
 
 
 class BackgroundSyncServer(BaseHTTPRequestHandler):
@@ -191,7 +245,6 @@ class BackgroundSyncServer(BaseHTTPRequestHandler):
             self.end_headers()
 
     def log_message(self, format, *args):
-        # Silence console log noise
         pass
 
 
@@ -201,94 +254,6 @@ def run_http_server(port=8080):
         server.serve_forever()
     except Exception as e:
         print(f"Sync server notice (port {port}): {e}")
-
-
-class CloudSettingsDialog(QDialog):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("Cloud Database & Sync Settings")
-        self.resize(500, 260)
-        self.setStyleSheet("""
-            QDialog {
-                background-color: #0f172a;
-                color: #f8fafc;
-            }
-            QLabel {
-                color: #94a3b8;
-                font-size: 12px;
-            }
-            QLineEdit {
-                background-color: #1e293b;
-                border: 1px solid #334155;
-                border-radius: 8px;
-                padding: 8px 12px;
-                color: #f8fafc;
-                font-family: monospace;
-                font-size: 12px;
-            }
-            QLineEdit:focus {
-                border: 1px solid #38bdf8;
-            }
-            QPushButton {
-                background-color: #0284c7;
-                color: #ffffff;
-                font-weight: bold;
-                border-radius: 8px;
-                padding: 8px 16px;
-                font-size: 12px;
-            }
-            QPushButton:hover {
-                background-color: #0369a1;
-            }
-        """)
-
-        layout = QVBoxLayout(self)
-        layout.setSpacing(16)
-
-        title = QLabel("Cloud Sync Configuration")
-        title.setStyleSheet("font-size: 16px; font-weight: bold; color: #f8fafc;")
-        layout.addWidget(title)
-
-        desc = QLabel(
-            "Enter your Firebase Realtime Database URL or Cloud Webhook endpoint.\n"
-            "All mobile and web users will sync automatically to this URL."
-        )
-        desc.setWordWrap(True)
-        layout.addWidget(desc)
-
-        form = QFormLayout()
-        self.url_input = QLineEdit()
-        self.url_input.setPlaceholderText("https://<your-project>-default-rtdb.firebaseio.com/users.json")
-        form.addRow("Cloud DB URL:", self.url_input)
-        layout.addLayout(form)
-
-        # Load existing
-        self.load_config()
-
-        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel)
-        buttons.accepted.connect(self.save_config)
-        buttons.rejected.connect(self.reject)
-        layout.addWidget(buttons)
-
-    def load_config(self):
-        if os.path.exists(CONFIG_FILE):
-            try:
-                with open(CONFIG_FILE, "r") as f:
-                    cfg = json.load(f)
-                    self.url_input.setText(cfg.get("cloud_db_url", ""))
-            except Exception:
-                pass
-
-    def save_config(self):
-        url = self.url_input.text().strip()
-        cfg = {"cloud_db_url": url}
-        try:
-            with open(CONFIG_FILE, "w") as f:
-                json.dump(cfg, f, indent=2)
-            QMessageBox.information(self, "Settings Saved", "Cloud Database URL has been saved.")
-            self.accept()
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to save settings: {e}")
 
 
 class AddUserDialog(QDialog):
@@ -374,16 +339,22 @@ class SecurePartsAdminWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("SECURE PARTS® — Central User Telemetry & Database Console")
-        self.resize(1180, 720)
+        self.resize(1200, 740)
         self.local_ip = get_local_ip()
 
-        # Connect background sync signal
+        # Connect background local sync signal
         SYNC_SIGNALS.user_received.connect(self.on_user_synced_event)
 
         self.init_ui()
         self.load_users()
 
-        # Auto-refresh timer (every 4 seconds)
+        # Start Background Cloud Telemetry Receiver Thread
+        self.cloud_thread = CloudSyncThread()
+        self.cloud_thread.user_synced.connect(self.on_user_synced_event)
+        self.cloud_thread.status_updated.connect(self.on_cloud_status)
+        self.cloud_thread.start()
+
+        # Auto-refresh timer for local DB (every 4 seconds)
         self.auto_timer = QTimer(self)
         self.auto_timer.timeout.connect(self.load_users)
         self.auto_timer.start(4000)
@@ -481,7 +452,7 @@ class SecurePartsAdminWindow(QMainWindow):
         app_title.setStyleSheet("font-size: 20px; font-weight: 800; color: #f8fafc; letter-spacing: -0.5px;")
         header_left.addWidget(app_title)
 
-        app_sub = QLabel(f"Multi-Device Google Identity & Forensic User Registry  •  Local Sync Listener: http://{self.local_ip}:8080")
+        app_sub = QLabel(f"Cross-Device Google Identity & Forensic User Registry  •  Cloud Relay: https://ntfy.sh/{CLOUD_TOPIC}")
         app_sub.setStyleSheet("font-size: 12px; color: #38bdf8; font-family: monospace;")
         header_left.addWidget(app_sub)
 
@@ -495,10 +466,10 @@ class SecurePartsAdminWindow(QMainWindow):
         status_box_layout.setContentsMargins(6, 4, 6, 4)
         dot = QLabel("●")
         dot.setStyleSheet("color: #34d399; font-size: 14px; margin-right: 2px;")
-        status_lbl = QLabel("LIVE SYNC ACTIVE")
-        status_lbl.setStyleSheet("color: #a7f3d0; font-size: 11px; font-weight: bold; letter-spacing: 0.5px;")
+        self.status_badge_lbl = QLabel("CLOUD & LOCAL SYNC ACTIVE")
+        self.status_badge_lbl.setStyleSheet("color: #a7f3d0; font-size: 11px; font-weight: bold; letter-spacing: 0.5px;")
         status_box_layout.addWidget(dot)
-        status_box_layout.addWidget(status_lbl)
+        status_box_layout.addWidget(self.status_badge_lbl)
         header_layout.addWidget(status_box)
 
         main_layout.addLayout(header_layout)
@@ -533,9 +504,14 @@ class SecurePartsAdminWindow(QMainWindow):
         self.provider_filter.currentIndexChanged.connect(self.filter_table)
         toolbar.addWidget(self.provider_filter, stretch=1)
 
-        self.btn_refresh = QPushButton("🔄 Refresh")
-        self.btn_refresh.clicked.connect(self.load_users)
-        toolbar.addWidget(self.btn_refresh)
+        self.btn_cloud_sync = QPushButton("☁️ Sync Cloud")
+        self.btn_cloud_sync.clicked.connect(self.manual_cloud_sync)
+        self.btn_cloud_sync.setStyleSheet("background-color: #2563eb; color: white; border: none;")
+        toolbar.addWidget(self.btn_cloud_sync)
+
+        self.btn_import = QPushButton("📂 Import File")
+        self.btn_import.clicked.connect(self.import_file)
+        toolbar.addWidget(self.btn_import)
 
         self.btn_add = QPushButton("➕ Add User")
         self.btn_add.clicked.connect(self.open_add_user_dialog)
@@ -549,10 +525,6 @@ class SecurePartsAdminWindow(QMainWindow):
         self.btn_export_json = QPushButton("📊 Export JSON")
         self.btn_export_json.clicked.connect(self.export_json)
         toolbar.addWidget(self.btn_export_json)
-
-        self.btn_cloud = QPushButton("⚙️ Cloud Sync")
-        self.btn_cloud.clicked.connect(self.open_cloud_dialog)
-        toolbar.addWidget(self.btn_cloud)
 
         main_layout.addLayout(toolbar)
 
@@ -580,7 +552,7 @@ class SecurePartsAdminWindow(QMainWindow):
         # 5. Status Bar
         self.status_bar = QStatusBar()
         self.setStatusBar(self.status_bar)
-        self.status_bar.showMessage("Ready. Listening for cross-device sign-ins from mobile and desktop.")
+        self.status_bar.showMessage("Ready. Connected to Cloud Telemetry & listening for cross-device sign-ins.")
 
     def create_kpi_card(self, title, initial_value, color_hex, emoji):
         card = QFrame()
@@ -618,12 +590,21 @@ class SecurePartsAdminWindow(QMainWindow):
         if lbl:
             lbl.setText(str(new_value))
 
+    def on_cloud_status(self, msg):
+        self.status_badge_lbl.setText(msg.upper())
+
     def on_user_synced_event(self, user_dict):
         name = user_dict.get("name", "User")
         email = user_dict.get("email", "")
         device = user_dict.get("device", "Device")
-        self.status_bar.showMessage(f"⚡ New sign-in captured: {name} ({email}) from {device}!", 8000)
+        self.status_bar.showMessage(f"⚡ Sign-in captured: {name} ({email}) from {device}!", 8000)
         self.load_users()
+
+    def manual_cloud_sync(self):
+        self.status_bar.showMessage("Syncing from Cloud Relay...", 3000)
+        self.cloud_thread.fetch_messages(since="all")
+        self.load_users()
+        self.status_bar.showMessage("Cloud synchronization complete!", 5000)
 
     def load_users(self):
         users = get_all_users()
@@ -652,13 +633,11 @@ class SecurePartsAdminWindow(QMainWindow):
             device = (u.get("device") or "").lower()
             provider = (u.get("provider") or "").lower()
 
-            # Provider filter
             if provider_filter_idx == 1 and provider != "google":
                 continue
             if provider_filter_idx == 2 and provider == "google":
                 continue
 
-            # Query filter
             if query and not (query in name or query in email or query in role or query in device):
                 continue
 
@@ -669,7 +648,7 @@ class SecurePartsAdminWindow(QMainWindow):
     def populate_table(self, users):
         self.table.setRowCount(len(users))
         for row_idx, u in enumerate(users):
-            # 0. User Profile (Name + initial)
+            # 0. User Profile
             name = u.get("name") or "User"
             item_name = QTableWidgetItem(name)
             item_name.setFont(QFont("", 11, QFont.Weight.Bold))
@@ -734,9 +713,45 @@ class SecurePartsAdminWindow(QMainWindow):
             self.load_users()
             self.status_bar.showMessage("New user added successfully.", 5000)
 
-    def open_cloud_dialog(self):
-        dialog = CloudSettingsDialog(self)
-        dialog.exec()
+    def import_file(self):
+        path, _ = QFileDialog.getOpenFileName(
+            self, "Import Users Database", "",
+            "Data Files (*.json *.csv);;JSON Files (*.json);;CSV Files (*.csv)"
+        )
+        if not path:
+            return
+        imported = 0
+        try:
+            if path.endswith(".json"):
+                with open(path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    if isinstance(data, list):
+                        for u in data:
+                            if isinstance(u, dict) and u.get("email"):
+                                save_user_record(u)
+                                imported += 1
+            elif path.endswith(".csv"):
+                import csv
+                with open(path, "r", encoding="utf-8") as f:
+                    reader = csv.DictReader(f)
+                    for row in reader:
+                        u = {
+                            "id": row.get("ID") or row.get("User ID"),
+                            "name": row.get("Name"),
+                            "email": row.get("Email"),
+                            "provider": row.get("Provider"),
+                            "device": row.get("Device"),
+                            "organization": row.get("Organization"),
+                            "clearance": row.get("Clearance"),
+                            "role": row.get("Role")
+                        }
+                        if u.get("email"):
+                            save_user_record(u)
+                            imported += 1
+            self.load_users()
+            QMessageBox.information(self, "Import Successful", f"Successfully imported {imported} users into database.")
+        except Exception as e:
+            QMessageBox.critical(self, "Import Error", f"Failed to import file: {e}")
 
     def export_csv(self):
         path, _ = QFileDialog.getSaveFileName(self, "Export Users to CSV", "secureparts_users.csv", "CSV Files (*.csv)")
@@ -768,11 +783,16 @@ class SecurePartsAdminWindow(QMainWindow):
             except Exception as e:
                 QMessageBox.critical(self, "Export Failed", f"Could not write JSON: {e}")
 
+    def closeEvent(self, event):
+        if hasattr(self, 'cloud_thread'):
+            self.cloud_thread.stop()
+            self.cloud_thread.wait(1000)
+        event.accept()
+
 
 def main():
     init_database()
 
-    # Start background HTTP sync receiver thread on port 8080
     sync_thread = threading.Thread(target=run_http_server, args=(8080,), daemon=True)
     sync_thread.start()
 

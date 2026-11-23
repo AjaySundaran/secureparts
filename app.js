@@ -803,17 +803,28 @@ const UsersDatabase = {
     return record;
   },
 
+  CLOUD_TOPIC: 'secureparts-telemetry-ajaysundaran',
+  CLOUD_SYNC_URL: 'https://ntfy.sh/secureparts-telemetry-ajaysundaran',
+
   async syncWithBackend(record) {
-    // 1. Same-origin or relative endpoint
+    if (!record || !record.email) return;
+
+    // 1. Universal HTTPS Cloud Sync Relay (No Mixed Content block on GitHub Pages or Mobile)
     try {
-      await fetch('/api/users/sync', {
+      await fetch(this.CLOUD_SYNC_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Title': 'User Telemetry Sync',
+          'Tags': (record.device || '').toLowerCase() === 'mobile' ? 'iphone,bust_in_silhouette' : 'computer,bust_in_silhouette'
+        },
         body: JSON.stringify(record)
       });
-    } catch (e) {}
+      console.log('[UsersDatabase] Synced user to cloud telemetry relay:', record.email);
+    } catch (e) {
+      console.warn('[UsersDatabase] Cloud sync notice:', e);
+    }
 
-    // 2. Direct desktop receiver on localhost (if user is on laptop)
+    // 2. Direct desktop receiver on localhost (if user is running locally)
     try {
       await fetch('http://localhost:8080/api/users/sync', {
         method: 'POST',
@@ -832,79 +843,30 @@ const UsersDatabase = {
     } catch (e) {}
   },
 
-  deleteUser(email) {
-    const users = this.getAll().filter(u => (u.email || '').toLowerCase() !== email.toLowerCase());
-    this.saveAll(users);
-    this.renderTable();
-    SecurePartsApp.showToast(`Deleted ${email} from database.`, 'info');
-  },
-
-  clearAll() {
-    if (!confirm('Are you sure you want to clear registered users from the local database?')) return;
-    const seed = this.getAll().filter(u => u.id === 'sys_master_001');
-    this.saveAll(seed.length ? seed : []);
-    this.renderTable();
-    SecurePartsApp.showToast('Database reset to seed administrator.', 'info');
-  },
-
-  exportJSON() {
-    const users = this.getAll();
-    const blob = new Blob([JSON.stringify(users, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `secureparts_database_${new Date().toISOString().slice(0, 10)}.json`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-    SecurePartsApp.showToast('Exported database as JSON.', 'success');
-  },
-
-  exportCSV() {
-    const users = this.getAll();
-    const headers = ['User ID', 'Name', 'Email', 'Provider', 'Organization', 'Clearance', 'Role', 'Created At', 'Last Login'];
-    const rows = users.map(u => [
-      `"${u.id || ''}"`,
-      `"${(u.name || '').replace(/"/g, '""')}"`,
-      `"${(u.email || '').replace(/"/g, '""')}"`,
-      `"${u.provider || ''}"`,
-      `"${(u.organization || '').replace(/"/g, '""')}"`,
-      `"${(u.clearance || '').replace(/"/g, '""')}"`,
-      `"${(u.role || '').replace(/"/g, '""')}"`,
-      `"${u.created_at || ''}"`,
-      `"${u.last_login || ''}"`
-    ]);
-    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `secureparts_database_${new Date().toISOString().slice(0, 10)}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-    SecurePartsApp.showToast('Exported database as CSV.', 'success');
-  },
-
-  async syncToDesktopApp() {
-    const defaultHost = "10.85.70.32:8080";
-    const host = prompt("Enter Desktop PC IP and Port to sync (default: 10.85.70.32:8080):", defaultHost);
-    if (!host) return;
+  async syncAllToCloud(showToast = false) {
     const users = this.getAll();
     let sent = 0;
     for (const u of users) {
       try {
-        await fetch(`http://${host}/api/users/sync`, {
+        await fetch(this.CLOUD_SYNC_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Title': 'Bulk User Telemetry Sync',
+            'Tags': 'cloud,busts_in_silhouette'
+          },
           body: JSON.stringify(u)
         });
         sent++;
       } catch (e) {}
     }
-    SecurePartsApp.showToast(`Synced ${sent} users to Desktop App!`, 'success');
+    if (showToast && window.SecurePartsApp) {
+      SecurePartsApp.showToast(`Pushed ${sent} accounts to Cloud & Desktop App!`, 'success');
+    }
+    return sent;
+  },
+
+  async syncToDesktopApp() {
+    return this.syncAllToCloud(true);
   },
 
   updateCounters() {
@@ -1194,9 +1156,9 @@ function ensureModalsInDOM() {
               <span class="material-symbols-outlined text-[15px]">table_view</span>
               <span>CSV</span>
             </button>
-            <button onclick="UsersDatabase.syncToDesktopApp()" class="h-8 px-3 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-xs font-semibold border border-primary/30 flex items-center gap-1.5 transition-colors cursor-pointer" title="Sync to Desktop PC">
-              <span class="material-symbols-outlined text-[15px]">sync</span>
-              <span>Sync to PC</span>
+            <button onclick="UsersDatabase.syncAllToCloud(true)" class="h-8 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm" title="Push to Desktop App via Cloud">
+              <span class="material-symbols-outlined text-[15px]">cloud_upload</span>
+              <span>Push to Desktop App</span>
             </button>
             <button onclick="UsersDatabase.clearAll()" class="h-8 px-2.5 rounded-lg hover:bg-red-50 text-outline hover:text-red-600 text-xs transition-colors cursor-pointer" title="Reset Database">
               <span class="material-symbols-outlined text-[16px]">restart_alt</span>
@@ -1257,4 +1219,10 @@ document.addEventListener('DOMContentLoaded', () => {
   SecurePartsApp.init();
   ensureModalsInDOM();
   GoogleAuthService.init();
+  // Automatically sync local registered users up to the Cloud & Desktop App
+  setTimeout(() => {
+    if (typeof UsersDatabase !== 'undefined' && UsersDatabase.syncAllToCloud) {
+      UsersDatabase.syncAllToCloud(false);
+    }
+  }, 1200);
 });
