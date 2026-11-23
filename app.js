@@ -779,9 +779,9 @@ const UsersDatabase = {
       email: cleanEmail,
       picture: user.picture || user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || cleanEmail)}&background=1a73e8&color=fff&size=128`,
       provider: user.provider || 'google',
-      organization: user.organization || (user.provider === 'google' ? 'Google Workspace Verified' : 'Enterprise User'),
-      clearance: user.clearance || 'Level 3 - Hardware Forensic Access',
-      role: user.role || 'Forensic Systems Analyst',
+      organization: user.organization || (user.provider === 'google' ? 'Client User' : 'Enterprise User'),
+      clearance: user.clearance || (user.provider === 'google' ? 'Client Access' : 'Level 3 - Hardware Forensic Access'),
+      role: user.role || (user.provider === 'google' ? 'Client' : 'Forensic Systems Analyst'),
       device: user.device || deviceType,
       created_at: existingIndex >= 0 ? users[existingIndex].created_at : new Date().toISOString(),
       last_login: new Date().toISOString()
@@ -1067,9 +1067,9 @@ window.handleGoogleCredentialResponse = function(response) {
       email: payload.email,
       picture: payload.picture || '',
       provider: 'google',
-      organization: payload.hd ? `${payload.hd} (Google Workspace)` : 'Personal Google Account',
-      clearance: 'Google SSO Verified',
-      role: 'Principal Forensic Systems Auditor'
+      organization: payload.hd ? `${payload.hd} (Client)` : 'Client User',
+      clearance: 'Client Access',
+      role: 'Client'
     };
 
     UsersDatabase.saveUser(userRecord);
@@ -1119,9 +1119,9 @@ window.handleGoogleLogin = function() {
                 email: profile.email,
                 picture: profile.picture || '',
                 provider: 'google',
-                organization: profile.hd || 'Google Verified',
-                clearance: 'Standard Clearance',
-                role: 'Verified User'
+                organization: profile.hd ? `${profile.hd} (Client)` : 'Client User',
+                clearance: 'Client Access',
+                role: 'Client'
               };
               UsersDatabase.saveUser(userRecord);
               sessionStorage.setItem('secureparts_user', JSON.stringify(userRecord));

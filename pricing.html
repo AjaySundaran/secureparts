@@ -91,6 +91,10 @@
         <a class="px-space-md py-space-xs font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors" data-path="features" href="index.html#features">Features</a>
         <a class="px-space-md py-space-xs font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors" data-path="how-it-works" href="index.html#how-it-works">How It Works</a>
         <a aria-current="page" class="px-space-md py-space-xs transition-colors bg-surface-container-high text-primary font-semibold rounded-lg" data-path="pricing" href="pricing.html">Pricing</a>
+        <a class="px-space-md py-space-xs font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors flex items-center gap-1" data-path="payment" href="payment.html">
+          <span class="material-symbols-outlined text-[15px] text-primary">credit_card</span>
+          <span>Test Payment</span>
+        </a>
         <a class="px-space-md py-space-xs font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors" data-path="download" href="download.html">Download</a>
         <a class="px-space-md py-space-xs font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors" data-path="about" href="index.html#how-it-works">About</a>
         <a class="px-space-md py-space-xs font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer" onclick="UsersDatabase.openModal(); return false;" href="#">
@@ -208,9 +212,9 @@
                   </li>
                 </ul>
               </div>
-              <button onclick="SecurePartsApp.showToast('Basic Plan selected. Proceeding to client download...', 'info'); setTimeout(() => window.location.href='download.html', 1000);" class="w-full py-3 px-space-md rounded-lg text-xs font-semibold text-primary bg-surface-container-low hover:bg-surface-container transition-all flex items-center justify-center gap-space-xs">
-                <span>Start Free 14-Day Trial</span>
-                <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+              <button onclick="window.location.href='payment.html?plan=basic'" class="w-full py-3 px-space-md rounded-lg text-xs font-semibold text-primary bg-surface-container-low hover:bg-surface-container transition-all flex items-center justify-center gap-space-xs cursor-pointer">
+                <span>Subscribe ($49/mo) • Test Payment</span>
+                <span class="material-symbols-outlined text-[18px]">credit_card</span>
               </button>
             </div>
 
@@ -260,9 +264,9 @@
                   </li>
                 </ul>
               </div>
-              <button onclick="SecurePartsApp.showToast('Professional Plan activated for trial! Initiating download...', 'success'); setTimeout(() => window.location.href='download.html', 1000);" class="w-full py-3.5 px-space-md rounded-lg text-xs font-bold text-on-primary bg-gradient-to-r from-primary to-primary-container hover:from-primary hover:to-secondary transition-all shadow-md flex items-center justify-center gap-space-xs">
-                <span class="material-symbols-outlined text-[20px]">verified_user</span>
-                <span>Download Pro Trial</span>
+              <button onclick="window.location.href='payment.html?plan=pro'" class="w-full py-3.5 px-space-md rounded-lg text-xs font-bold text-on-primary bg-gradient-to-r from-primary to-primary-container hover:from-primary hover:to-secondary transition-all shadow-md flex items-center justify-center gap-space-xs cursor-pointer">
+                <span class="material-symbols-outlined text-[20px]">credit_card</span>
+                <span>Checkout Pro ($189/mo) • Test Payment</span>
               </button>
             </div>
 
@@ -308,9 +312,9 @@
                   </li>
                 </ul>
               </div>
-              <button onclick="SecurePartsApp.showToast('Routing to Defense Procurement Dispatch...', 'info'); setTimeout(() => window.location.href='login.html', 1000);" class="w-full py-3 px-space-md rounded-lg text-xs font-semibold text-on-primary bg-on-surface hover:bg-black transition-all flex items-center justify-center gap-space-xs shadow-xs">
-                <span>Contact Enterprise Sales</span>
-                <span class="material-symbols-outlined text-[18px]">terminal</span>
+              <button onclick="window.location.href='payment.html?plan=enterprise'" class="w-full py-3 px-space-md rounded-lg text-xs font-semibold text-on-primary bg-on-surface hover:bg-black transition-all flex items-center justify-center gap-space-xs shadow-xs cursor-pointer">
+                <span>Enterprise License ($499/mo) • Test Payment</span>
+                <span class="material-symbols-outlined text-[18px]">credit_card</span>
               </button>
             </div>
 

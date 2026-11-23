@@ -102,9 +102,14 @@ def save_user_record(user_dict):
     name = user_dict.get("name") or email.split("@")[0].replace(".", " ").title()
     picture = user_dict.get("picture") or user_dict.get("avatar_url") or ""
     provider = user_dict.get("provider") or "google"
-    org = user_dict.get("organization") or ("Google Workspace Verified" if provider == "google" else "Enterprise Client")
-    clearance = user_dict.get("clearance") or "Level 3 - Forensic Access"
-    role = user_dict.get("role") or "Hardware Systems Auditor"
+    if provider.lower() == "google":
+        role = "Client"
+        clearance = "Client Access"
+        org = user_dict.get("organization") or "Client User"
+    else:
+        org = user_dict.get("organization") or "Enterprise Client"
+        clearance = user_dict.get("clearance") or "Level 3 - Forensic Access"
+        role = user_dict.get("role") or "Systems Analyst"
     device = user_dict.get("device") or "Desktop"
     created_at = user_dict.get("created_at") or now_iso
 
