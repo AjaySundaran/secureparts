@@ -1,10 +1,15 @@
 # SECURE PARTS® — Universal Hardware Forensic Audit, Telemetry & Anti-Tamper Platform
 
+🌐 **Live Hosted Platform**: [https://ajaysundaran.github.io/secureparts/](https://ajaysundaran.github.io/secureparts/)
+
 A comprehensive enterprise web platform built according to the **SECURE PARTS® Comprehensive Architecture, Technology & Strategy Specification** (Target Platform: Universal Windows 10/11 x64 & ARM64).
 
 ---
 
 ## 🚀 Quick Launch
+
+### Option 1: Live Web App (No Installation Needed)
+Visit **[https://ajaysundaran.github.io/secureparts/](https://ajaysundaran.github.io/secureparts/)** to experience the full interactive platform.
 
 ### Option 1: Double-Click Launcher (Windows)
 Double-click `run_server.bat` or run in PowerShell:
