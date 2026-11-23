@@ -17,7 +17,96 @@ import json
 import hmac
 import hashlib
 import secrets
+import sqlite3
 from typing import Dict, Any, Optional
+
+SQLITE_DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "users.db")
+
+def init_sqlite_db():
+    try:
+        conn = sqlite3.connect(SQLITE_DB_PATH)
+        c = conn.cursor()
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                email TEXT UNIQUE NOT NULL,
+                picture TEXT,
+                provider TEXT DEFAULT 'google',
+                organization TEXT,
+                clearance TEXT,
+                role TEXT,
+                created_at TEXT,
+                last_login TEXT
+            )
+        """)
+        c.execute("SELECT COUNT(*) FROM users")
+        if c.fetchone()[0] == 0:
+            c.execute("""
+                INSERT INTO users (id, name, email, picture, provider, organization, clearance, role, created_at, last_login)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                "sys_master_001",
+                "Dr. Sarah Chen",
+                "lead.engineer@defense.gov",
+                "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=faces",
+                "enterprise",
+                "Department of Defense / AS9100D Oversight",
+                "Top Secret / SCI",
+                "Principal Hardware Integrity Architect",
+                "2026-01-15T09:30:00Z",
+                "2026-11-22T22:56:00Z"
+            ))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"[!] SQLite init error: {e}")
+
+init_sqlite_db()
+
+def save_user_to_sqlite(user: dict):
+    try:
+        conn = sqlite3.connect(SQLITE_DB_PATH)
+        c = conn.cursor()
+        now_iso = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
+        user_id = user.get("id") or user.get("google_id") or ("usr_" + secrets.token_hex(6))
+        c.execute("""
+            INSERT INTO users (id, name, email, picture, provider, organization, clearance, role, created_at, last_login)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(email) DO UPDATE SET
+                name=excluded.name,
+                picture=COALESCE(excluded.picture, users.picture),
+                last_login=excluded.last_login,
+                role=COALESCE(excluded.role, users.role)
+        """, (
+            user_id,
+            user.get("name", "Verified User"),
+            user.get("email", "").lower().strip(),
+            user.get("picture") or user.get("avatar_url", ""),
+            user.get("provider", "google"),
+            user.get("organization", "Enterprise User"),
+            user.get("clearance", "Standard Clearance"),
+            user.get("role", "Systems Auditor"),
+            user.get("created_at", now_iso),
+            now_iso
+        ))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"[!] SQLite save error: {e}")
+
+def get_all_users_from_sqlite():
+    try:
+        conn = sqlite3.connect(SQLITE_DB_PATH)
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+        c.execute("SELECT * FROM users ORDER BY last_login DESC")
+        rows = [dict(r) for r in c.fetchall()]
+        conn.close()
+        return rows
+    except Exception as e:
+        print(f"[!] SQLite query error: {e}")
+        return []
 
 try:
     from fastapi import FastAPI, Request, Response, HTTPException, status, UploadFile, File
@@ -153,6 +242,17 @@ if USE_FASTAPI:
                 "avatar_url": payload.avatar_url or "",
                 "created_at": time.time()
             }
+        
+        save_user_to_sqlite({
+            "id": payload.google_id,
+            "name": name,
+            "email": email,
+            "picture": payload.avatar_url or "",
+            "provider": "google",
+            "organization": "Enterprise Google Workspace",
+            "clearance": "Google SSO Authenticated",
+            "role": "Hardware Systems Auditor"
+        })
         
         user = USERS_DB[email]
         session_token = secrets.token_hex(32)
@@ -377,6 +477,24 @@ if USE_FASTAPI:
             "rate_limiter": "Active (Token-bucket per IP)",
             "air_gap_compatibility": "Verified (No third-party outbound dependencies)"
         }
+
+    # 9. Persistent Users Database Endpoints
+    @app.get("/api/users")
+    async def get_database_users():
+        return {
+            "success": True,
+            "count": len(get_all_users_from_sqlite()),
+            "users": get_all_users_from_sqlite()
+        }
+
+    @app.post("/api/users/sync")
+    async def sync_database_user(request: Request):
+        try:
+            data = await request.json()
+            save_user_to_sqlite(data)
+            return {"success": True, "message": "User committed to persistent database."}
+        except Exception as e:
+            return JSONResponse(status_code=400, content={"success": False, "error": str(e)})
 
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     app.mount("/assets", StaticFiles(directory=os.path.join(BASE_DIR, "assets")), name="assets")

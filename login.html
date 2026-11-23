@@ -135,13 +135,14 @@
               <span>Continue with Google</span>
             </button>
             
-            <div class="flex items-center justify-between w-full px-1 mt-1.5 text-[10.5px] text-on-surface-variant font-mono">
-              <span id="google-status-hint" class="flex items-center gap-1">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                <span>Browser Google Account Chooser</span>
-              </span>
-              <button type="button" onclick="promptGoogleClientId()" class="text-primary hover:underline hover:text-primary-container">
-                Client ID
+            <div class="flex items-center justify-between w-full px-1 mt-2 text-[11px] text-on-surface-variant font-mono">
+              <button type="button" onclick="UsersDatabase.openModal()" class="flex items-center gap-1.5 text-primary hover:underline cursor-pointer">
+                <span class="material-symbols-outlined text-[15px]">database</span>
+                <span id="db-user-count-label">Users Database</span>
+              </button>
+              <button type="button" onclick="GoogleAuthService.showConfigModal()" class="flex items-center gap-1 text-on-surface-variant hover:text-primary transition-colors cursor-pointer">
+                <span class="material-symbols-outlined text-[14px]">settings</span>
+                <span>Google Setup</span>
               </button>
             </div>
           </div>
@@ -335,38 +336,6 @@
     </div>
   </main>
 
-  <script>
-    function handleGoogleLogin() {
-      const width = 480, height = 620;
-      const left = window.screenX + Math.max(0, (window.outerWidth - width) / 2);
-      const top = window.screenY + Math.max(0, (window.outerHeight - height) / 2);
-      const popup = window.open(
-        'google_account_chooser.html',
-        'GoogleAccounts',
-        `width=${width},height=${height},left=${left},top=${top},status=0,toolbar=0,menubar=0,location=1,resizable=1`
-      );
-      if (!popup || popup.closed || typeof popup.closed === 'undefined') {
-        window.location.href = 'google_account_chooser.html';
-      }
-    }
-
-    window.addEventListener('message', function(event) {
-      if (event.data && event.data.type === 'GOOGLE_SIGNIN_SUCCESS') {
-        const user = event.data.user;
-        if (typeof window.executeGoogleAuth === 'function') {
-          window.executeGoogleAuth(user.email, user.name, user.google_id);
-        } else {
-          sessionStorage.setItem('secureparts_user', JSON.stringify({
-            name: user.name,
-            email: user.email,
-            organization: 'Google Workspace Enterprise',
-            clearance: 'Google SSO Verified'
-          }));
-          window.location.href = 'index.html';
-        }
-      }
-    });
-  </script>
   <script src="app.js"></script>
 </body>
 </html>

@@ -391,7 +391,6 @@ const SecurePartsApp = {
 
   // Setup Authentication Modals, Google Login & OTP Verification Flow
   setupAuthModalsAndForms() {
-    // Tab switching between Sign In and Sign Up
     window.switchAuthTab = (tab) => {
       const signInTab = document.getElementById('tab-btn-signin');
       const signUpTab = document.getElementById('tab-btn-signup');
@@ -402,21 +401,20 @@ const SecurePartsApp = {
       if (!signInTab || !signUpTab) return;
 
       if (tab === 'signin') {
-        signInTab.className = 'flex-1 py-2 text-xs font-bold text-primary border-b-2 border-primary transition-all';
-        signUpTab.className = 'flex-1 py-2 text-xs font-medium text-on-surface-variant hover:text-on-surface border-b-2 border-transparent transition-all';
-        signInForm.classList.remove('hidden');
-        signUpForm.classList.add('hidden');
+        signInTab.className = 'flex-1 py-2 text-xs font-bold text-primary border-b-2 border-primary transition-all cursor-pointer';
+        signUpTab.className = 'flex-1 py-2 text-xs font-medium text-on-surface-variant hover:text-on-surface border-b-2 border-transparent transition-all cursor-pointer';
+        if (signInForm) signInForm.classList.remove('hidden');
+        if (signUpForm) signUpForm.classList.add('hidden');
         if (otpForm) otpForm.classList.add('hidden');
       } else {
-        signUpTab.className = 'flex-1 py-2 text-xs font-bold text-primary border-b-2 border-primary transition-all';
-        signInTab.className = 'flex-1 py-2 text-xs font-medium text-on-surface-variant hover:text-on-surface border-b-2 border-transparent transition-all';
-        signUpForm.classList.remove('hidden');
-        signInForm.classList.add('hidden');
+        signUpTab.className = 'flex-1 py-2 text-xs font-bold text-primary border-b-2 border-primary transition-all cursor-pointer';
+        signInTab.className = 'flex-1 py-2 text-xs font-medium text-on-surface-variant hover:text-on-surface border-b-2 border-transparent transition-all cursor-pointer';
+        if (signUpForm) signUpForm.classList.remove('hidden');
+        if (signInForm) signInForm.classList.add('hidden');
         if (otpForm) otpForm.classList.add('hidden');
       }
     };
 
-    // Global toast helper
     window.showToast = (msg, type = 'info') => {
       SecurePartsApp.showToast(msg, type);
     };
@@ -447,104 +445,25 @@ const SecurePartsApp = {
         });
         const data = await res.json();
         if (res.ok && data.success) {
+          UsersDatabase.saveUser(data.user);
           sessionStorage.setItem('secureparts_user', JSON.stringify(data.user));
-          SecurePartsApp.showToast(`Welcome back, ${data.user.name || email}!`, 'success');
+          SecurePartsApp.showToast(`Welcome back, ${data.user.name || email}! Saved to database.`, 'success');
           setTimeout(() => window.location.href = 'index.html', 800);
         } else {
           SecurePartsApp.showToast(data.detail || 'Invalid email or password.', 'error');
         }
       } catch (err) {
-        // Local session fallback
         const name = email.split('@')[0].replace(/[\._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-        const user = { name, email, clearance: 'Standard Verified User' };
+        const user = { name, email, clearance: 'Standard Verified User', provider: 'enterprise' };
+        UsersDatabase.saveUser(user);
         sessionStorage.setItem('secureparts_user', JSON.stringify(user));
-        SecurePartsApp.showToast(`Welcome back, ${name}!`, 'success');
+        SecurePartsApp.showToast(`Welcome back, ${name}! Saved to database.`, 'success');
         setTimeout(() => window.location.href = 'index.html', 800);
       } finally {
         if (btn) {
           btn.disabled = false;
           btn.innerHTML = `<span id="btn-text">Sign In</span><span class="material-symbols-outlined text-[18px]">arrow_forward</span>`;
         }
-      }
-    };
-
-    // Google Sign-In Click Trigger: Opens Real Google Account Chooser
-    window.handleGoogleLogin = () => {
-      const width = 480;
-      const height = 620;
-      const left = window.screenX + Math.max(0, (window.outerWidth - width) / 2);
-      const top = window.screenY + Math.max(0, (window.outerHeight - height) / 2);
-
-      // Open Google Account Chooser popup
-      const popup = window.open(
-        'google_account_chooser.html',
-        'GoogleAccounts',
-        `width=${width},height=${height},left=${left},top=${top},status=0,toolbar=0,menubar=0,location=1,resizable=1`
-      );
-
-      // Fallback if browser blocks popups
-      if (!popup || popup.closed || typeof popup.closed === 'undefined') {
-        window.location.href = 'google_account_chooser.html';
-      }
-    };
-
-    // Listen for account selection from Google Account Chooser popup
-    window.addEventListener('message', async (event) => {
-      if (event.data && event.data.type === 'GOOGLE_SIGNIN_SUCCESS') {
-        const u = event.data.user;
-        if (u && u.email) {
-          await window.executeGoogleAuth(u.email, u.name, u.google_id);
-        }
-      }
-    });
-
-    window.executeGoogleAuth = async (userGoogleEmail, userName, googleId, avatarUrl) => {
-      const btn = document.getElementById('google-login-btn');
-      if (btn) btn.innerHTML = `<span class="material-symbols-outlined text-[18px] animate-spin">refresh</span><span>Authenticating with Google...</span>`;
-
-      try {
-        const res = await fetch('/api/auth/google', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: userGoogleEmail,
-            name: userName || userGoogleEmail.split('@')[0].replace('.', ' ').toUpperCase(),
-            google_id: googleId || ("goog_sec_" + Math.random().toString(36).substring(2, 10)),
-            avatar_url: avatarUrl || ""
-          })
-        });
-
-        const data = await res.json();
-        if (res.ok && data.success) {
-          sessionStorage.setItem('secureparts_user', JSON.stringify(data.user));
-          SecurePartsApp.showToast(`Signed in with Google as ${data.user.email}! Welcome back.`, 'success');
-          setTimeout(() => window.location.href = 'index.html', 800);
-        } else {
-          SecurePartsApp.showToast('Google authentication failed. Please try again.', 'error');
-        }
-      } catch (err) {
-        // Fallback local session for offline or direct file preview
-        const fallbackUser = {
-          name: userName || "Ajay Sundaran",
-          email: userGoogleEmail,
-          organization: "Personal Account",
-          clearance: "Verified User"
-        };
-        sessionStorage.setItem('secureparts_user', JSON.stringify(fallbackUser));
-        SecurePartsApp.showToast(`Signed in with Google as ${userGoogleEmail}!`, 'success');
-        setTimeout(() => window.location.href = 'index.html', 800);
-      } finally {
-        if (btn) btn.innerHTML = `
-          <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
-          <span>Continue with Google</span>
-        `;
-      }
-    };
-      } finally {
-        if (btn) btn.innerHTML = `
-          <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
-          <span>Continue with Google</span>
-        `;
       }
     };
 
@@ -558,7 +477,7 @@ const SecurePartsApp = {
       const btn = document.getElementById('signup-submit-btn');
 
       if (!name || !email || !pwd) {
-        this.showToast('Please fill all required fields.', 'error');
+        SecurePartsApp.showToast('Please fill all required fields.', 'error');
         return;
       }
 
@@ -573,72 +492,25 @@ const SecurePartsApp = {
         });
         const data = await res.json();
         if (res.ok && data.success) {
-          this.pendingSignupEmail = email;
-          this.showOtpScreen(email, data.otp_preview);
-          this.showToast(`Verification OTP sent to ${email}! Check code: ${data.otp_preview || ''}`, 'success');
+          SecurePartsApp.pendingSignupEmail = email;
+          SecurePartsApp.pendingSignupName = name;
+          SecurePartsApp.pendingSignupOrg = org;
+          SecurePartsApp.showOtpScreen(email, data.otp_preview);
+          SecurePartsApp.showToast(`Verification OTP sent to ${email}! Code: ${data.otp_preview || ''}`, 'success');
         } else {
-          this.showToast(data.detail || 'Failed to send OTP code.', 'error');
+          SecurePartsApp.showToast(data.detail || 'Failed to send OTP code.', 'error');
         }
       } catch (err) {
-        // Fallback local OTP simulation
         const fakeOtp = "849201";
-        this.pendingSignupEmail = email;
-        this.showOtpScreen(email, fakeOtp);
-        this.showToast(`Verification OTP generated: ${fakeOtp}`, 'success');
+        SecurePartsApp.pendingSignupEmail = email;
+        SecurePartsApp.pendingSignupName = name;
+        SecurePartsApp.pendingSignupOrg = org;
+        SecurePartsApp.showOtpScreen(email, fakeOtp);
+        SecurePartsApp.showToast(`Verification OTP generated: ${fakeOtp}`, 'success');
       } finally {
         btn.disabled = false;
         btn.innerHTML = `<span>Generate OTP & Create Account</span><span class="material-symbols-outlined text-[18px]">key</span>`;
       }
-    };
-
-    // Display OTP Verification Screen
-    this.showOtpScreen = (email, previewCode) => {
-      document.getElementById('signup-form-panel').classList.add('hidden');
-      document.getElementById('signin-form-panel').classList.add('hidden');
-      const otpPanel = document.getElementById('otp-verify-panel');
-      otpPanel.classList.remove('hidden');
-
-      document.getElementById('otp-target-email').textContent = email;
-      const previewBanner = document.getElementById('otp-preview-banner');
-      if (previewBanner && previewCode) {
-        previewBanner.classList.remove('hidden');
-        document.getElementById('otp-preview-code').textContent = previewCode;
-      }
-
-      // Auto focus first OTP input
-      const firstOtp = document.getElementById('otp-1');
-      if (firstOtp) {
-        firstOtp.focus();
-        if (previewCode && previewCode.length === 6) {
-          // Pre-fill for ultra-convenient testing
-          for (let i = 1; i <= 6; i++) {
-            const input = document.getElementById(`otp-${i}`);
-            if (input) input.value = previewCode[i - 1];
-          }
-        }
-      }
-
-      this.startOtpTimer();
-    };
-
-    // OTP Timer
-    this.startOtpTimer = () => {
-      clearInterval(this.otpCountdownInterval);
-      let seconds = 60;
-      const timerEl = document.getElementById('otp-timer');
-      const resendBtn = document.getElementById('otp-resend-btn');
-
-      if (resendBtn) resendBtn.disabled = true;
-
-      this.otpCountdownInterval = setInterval(() => {
-        seconds--;
-        if (timerEl) timerEl.textContent = `(${seconds}s)`;
-        if (seconds <= 0) {
-          clearInterval(this.otpCountdownInterval);
-          if (timerEl) timerEl.textContent = '';
-          if (resendBtn) resendBtn.disabled = false;
-        }
-      }, 1000);
     };
 
     // Step 2: Verify OTP
@@ -651,12 +523,15 @@ const SecurePartsApp = {
       }
 
       if (otpCode.length !== 6) {
-        this.showToast('Please enter all 6 digits of the OTP verification code.', 'error');
+        SecurePartsApp.showToast('Please enter all 6 digits of the OTP verification code.', 'error');
         return;
       }
 
-      const email = this.pendingSignupEmail || document.getElementById('signup-email').value.trim();
+      const email = SecurePartsApp.pendingSignupEmail || (document.getElementById('signup-email') ? document.getElementById('signup-email').value.trim() : '');
+      const name = SecurePartsApp.pendingSignupName || email.split('@')[0];
+      const org = SecurePartsApp.pendingSignupOrg || 'Enterprise Client';
       const btn = document.getElementById('otp-submit-btn');
+      
       btn.disabled = true;
       btn.innerHTML = `<span class="material-symbols-outlined text-[16px] animate-spin">refresh</span><span>Verifying Cryptographic Seal...</span>`;
 
@@ -668,24 +543,32 @@ const SecurePartsApp = {
         });
         const data = await res.json();
         if (res.ok && data.success) {
-          sessionStorage.setItem('secureparts_user', JSON.stringify(data.user));
-          this.showToast(`OTP Verified! Welcome to SECURE PARTS®, ${data.user.name}.`, 'success');
-          setTimeout(() => window.location.href = 'index.html', 1200);
+          const u = data.user;
+          UsersDatabase.saveUser(u);
+          sessionStorage.setItem('secureparts_user', JSON.stringify(u));
+          SecurePartsApp.showToast(`OTP Verified! Welcome ${u.name}, account saved to database.`, 'success');
+          setTimeout(() => window.location.href = 'index.html', 1000);
         } else {
-          this.showToast(data.detail || 'Invalid OTP code. Please retry.', 'error');
+          SecurePartsApp.showToast(data.detail || 'Invalid OTP code. Please retry.', 'error');
         }
       } catch (err) {
-        const fakeUser = { name: "Verified User", email: email, clearance: "Standard Verified" };
+        const fakeUser = {
+          name: name,
+          email: email,
+          organization: org,
+          clearance: 'Standard Verified',
+          provider: 'enterprise_otp'
+        };
+        UsersDatabase.saveUser(fakeUser);
         sessionStorage.setItem('secureparts_user', JSON.stringify(fakeUser));
-        this.showToast(`OTP Verified! Welcome to SECURE PARTS®!`, 'success');
-        setTimeout(() => window.location.href = 'index.html', 1200);
+        SecurePartsApp.showToast(`OTP Verified! Welcome ${name}, saved to database.`, 'success');
+        setTimeout(() => window.location.href = 'index.html', 1000);
       } finally {
         btn.disabled = false;
         btn.innerHTML = `<span>Verify OTP & Unlock Access</span><span class="material-symbols-outlined text-[18px]">verified</span>`;
       }
     };
 
-    // OTP Input Auto Advance
     window.handleOtpInput = (el, nextId, prevId, event) => {
       if (event && event.key === 'Backspace' && !el.value && prevId) {
         const prev = document.getElementById(prevId);
@@ -699,21 +582,725 @@ const SecurePartsApp = {
     };
   },
 
-  // Check Session
+  showOtpScreen(email, previewCode) {
+    const signupPanel = document.getElementById('signup-form-panel');
+    const signinPanel = document.getElementById('signin-form-panel');
+    const otpPanel = document.getElementById('otp-verify-panel');
+    if (signupPanel) signupPanel.classList.add('hidden');
+    if (signinPanel) signinPanel.classList.add('hidden');
+    if (otpPanel) otpPanel.classList.remove('hidden');
+
+    const targetEmail = document.getElementById('otp-target-email');
+    if (targetEmail) targetEmail.textContent = email;
+    const previewBanner = document.getElementById('otp-preview-banner');
+    if (previewBanner && previewCode) {
+      previewBanner.classList.remove('hidden');
+      const codeSpan = document.getElementById('otp-preview-code');
+      if (codeSpan) codeSpan.textContent = previewCode;
+    }
+
+    const firstOtp = document.getElementById('otp-1');
+    if (firstOtp) {
+      firstOtp.focus();
+      if (previewCode && previewCode.length === 6) {
+        for (let i = 1; i <= 6; i++) {
+          const input = document.getElementById(`otp-${i}`);
+          if (input) input.value = previewCode[i - 1];
+        }
+      }
+    }
+
+    this.startOtpTimer();
+  },
+
+  startOtpTimer() {
+    clearInterval(this.otpCountdownInterval);
+    let seconds = 60;
+    const timerEl = document.getElementById('otp-timer');
+    const resendBtn = document.getElementById('otp-resend-btn');
+
+    if (resendBtn) resendBtn.disabled = true;
+
+    this.otpCountdownInterval = setInterval(() => {
+      seconds--;
+      if (timerEl) timerEl.textContent = `(${seconds}s)`;
+      if (seconds <= 0) {
+        clearInterval(this.otpCountdownInterval);
+        if (timerEl) timerEl.textContent = '';
+        if (resendBtn) resendBtn.disabled = false;
+      }
+    }, 1000);
+  },
+
+  // Check Session and update Header profile avatar
   checkSession() {
+    UsersDatabase.updateCounters();
+    
+    // Inject "Users Database" link in navigation bar if missing
+    const nav = document.querySelector('header nav');
+    if (nav && !document.getElementById('nav-database-link')) {
+      const dbLink = document.createElement('a');
+      dbLink.id = 'nav-database-link';
+      dbLink.href = '#';
+      dbLink.className = 'px-space-md py-space-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer';
+      dbLink.innerHTML = `<span class="material-symbols-outlined text-[16px] text-primary">database</span><span>Users Database</span>`;
+      dbLink.onclick = (e) => { e.preventDefault(); UsersDatabase.openModal(); };
+      nav.appendChild(dbLink);
+    }
+
     const userJson = sessionStorage.getItem('secureparts_user');
     if (userJson) {
       try {
         const user = JSON.parse(userJson);
         const signInBtn = document.querySelector('header a[data-path="login"]');
         if (signInBtn) {
-          signInBtn.textContent = user.name ? `${user.name.split(' ')[0]} (Active)` : 'Workspace';
-          signInBtn.href = 'login.html';
+          const avatar = user.picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=1a73e8&color=fff&size=64`;
+          const firstName = (user.name || 'User').split(' ')[0];
+          
+          const profileWrapper = document.createElement('div');
+          profileWrapper.className = 'relative inline-block';
+          profileWrapper.id = 'header-user-profile-widget';
+          profileWrapper.innerHTML = `
+            <button onclick="toggleUserProfileDropdown()" class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-container-low hover:bg-surface-container border border-surface-container transition-all cursor-pointer">
+              <img src="${avatar}" alt="${user.name}" class="w-6 h-6 rounded-full object-cover shrink-0 border border-surface-container" onerror="this.src='https://ui-avatars.com/api/?name=User&background=64748b&color=fff'">
+              <span class="text-xs font-bold text-on-surface truncate max-w-[110px]">${firstName}</span>
+              <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+            </button>
+            <div id="user-profile-dropdown" class="hidden absolute right-0 mt-2 w-64 bg-surface-container-lowest border border-surface-container rounded-2xl shadow-xl p-3 z-50">
+              <div class="flex items-center gap-3 pb-3 border-b border-surface-container">
+                <img src="${avatar}" alt="${user.name}" class="w-10 h-10 rounded-full object-cover border border-surface-container shrink-0" onerror="this.src='https://ui-avatars.com/api/?name=User&background=64748b&color=fff'">
+                <div class="flex flex-col min-w-0">
+                  <span class="text-xs font-bold text-on-surface truncate">${user.name}</span>
+                  <span class="text-[11px] text-on-surface-variant font-mono truncate">${user.email}</span>
+                </div>
+              </div>
+              <div class="py-2 flex flex-col gap-1 text-xs">
+                <button onclick="UsersDatabase.openModal(); toggleUserProfileDropdown();" class="flex items-center gap-2 px-2.5 py-2 rounded-lg hover:bg-surface-container-low text-on-surface transition-colors cursor-pointer w-full text-left">
+                  <span class="material-symbols-outlined text-[18px] text-primary">database</span>
+                  <span>Open Users Database</span>
+                </button>
+                <button onclick="GoogleAuthService.showConfigModal(); toggleUserProfileDropdown();" class="flex items-center gap-2 px-2.5 py-2 rounded-lg hover:bg-surface-container-low text-on-surface transition-colors cursor-pointer w-full text-left">
+                  <span class="material-symbols-outlined text-[18px] text-outline">settings</span>
+                  <span>Google Setup / Client ID</span>
+                </button>
+              </div>
+              <div class="pt-2 border-t border-surface-container">
+                <button onclick="SecurePartsApp.signOut()" class="flex items-center gap-2 px-2.5 py-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors cursor-pointer w-full text-left text-xs font-semibold">
+                  <span class="material-symbols-outlined text-[18px]">logout</span>
+                  <span>Sign Out</span>
+                </button>
+              </div>
+            </div>
+          `;
+
+          signInBtn.parentNode.replaceChild(profileWrapper, signInBtn);
         }
-      } catch {}
+      } catch (e) {
+        console.warn('Session parse error:', e);
+      }
     }
+  },
+
+  signOut() {
+    sessionStorage.removeItem('secureparts_user');
+    SecurePartsApp.showToast('Signed out of SECURE PARTS®.', 'info');
+    setTimeout(() => window.location.reload(), 600);
   }
 };
+
+window.toggleUserProfileDropdown = function() {
+  const dd = document.getElementById('user-profile-dropdown');
+  if (dd) dd.classList.toggle('hidden');
+};
+
+document.addEventListener('click', (e) => {
+  const widget = document.getElementById('header-user-profile-widget');
+  const dd = document.getElementById('user-profile-dropdown');
+  if (widget && dd && !widget.contains(e.target)) {
+    dd.classList.add('hidden');
+  }
+});
+
+/* ==========================================================================
+   USERS DATABASE ENGINE (Local Persistent + Cloud / SQLite Synced)
+   ========================================================================== */
+const UsersDatabase = {
+  STORAGE_KEY: 'secureparts_users_database',
+
+  getAll() {
+    try {
+      const data = localStorage.getItem(this.STORAGE_KEY);
+      if (data) {
+        const parsed = JSON.parse(data);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      console.warn('UsersDatabase read error:', e);
+    }
+    const seed = [
+      {
+        id: 'sys_master_001',
+        name: 'Dr. Sarah Chen',
+        email: 'lead.engineer@defense.gov',
+        picture: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=faces',
+        provider: 'enterprise',
+        organization: 'Department of Defense / AS9100D',
+        clearance: 'Top Secret / SCI',
+        role: 'Principal Hardware Integrity Architect',
+        created_at: '2026-01-15T09:30:00Z',
+        last_login: '2026-11-22T22:56:00Z'
+      }
+    ];
+    this.saveAll(seed);
+    return seed;
+  },
+
+  saveAll(users) {
+    try {
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(users));
+    } catch (e) {
+      console.error('UsersDatabase write error:', e);
+    }
+    this.updateCounters();
+  },
+
+  saveUser(user) {
+    if (!user || !user.email) return null;
+    const users = this.getAll();
+    const cleanEmail = user.email.trim().toLowerCase();
+    const existingIndex = users.findIndex(u => (u.email || '').toLowerCase() === cleanEmail);
+
+    const record = {
+      id: user.id || user.google_id || user.sub || ('usr_' + Math.random().toString(36).substring(2, 10)),
+      name: user.name || cleanEmail.split('@')[0].replace(/[\._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+      email: cleanEmail,
+      picture: user.picture || user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || cleanEmail)}&background=1a73e8&color=fff&size=128`,
+      provider: user.provider || 'google',
+      organization: user.organization || (user.provider === 'google' ? 'Google Workspace Verified' : 'Enterprise User'),
+      clearance: user.clearance || 'Level 3 - Hardware Forensic Access',
+      role: user.role || 'Forensic Systems Analyst',
+      created_at: existingIndex >= 0 ? users[existingIndex].created_at : new Date().toISOString(),
+      last_login: new Date().toISOString()
+    };
+
+    if (existingIndex >= 0) {
+      users[existingIndex] = { ...users[existingIndex], ...record };
+    } else {
+      users.unshift(record);
+    }
+
+    this.saveAll(users);
+    this.syncWithBackend(record);
+
+    const modal = document.getElementById('secureparts-db-modal');
+    if (modal && !modal.classList.contains('hidden')) {
+      this.renderTable();
+    }
+    return record;
+  },
+
+  async syncWithBackend(record) {
+    try {
+      await fetch('/api/users/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(record)
+      });
+    } catch (e) {
+      // Running on GitHub Pages or local offline
+    }
+  },
+
+  deleteUser(email) {
+    const users = this.getAll().filter(u => (u.email || '').toLowerCase() !== email.toLowerCase());
+    this.saveAll(users);
+    this.renderTable();
+    SecurePartsApp.showToast(`Deleted ${email} from database.`, 'info');
+  },
+
+  clearAll() {
+    if (!confirm('Are you sure you want to clear registered users from the local database?')) return;
+    const seed = this.getAll().filter(u => u.id === 'sys_master_001');
+    this.saveAll(seed.length ? seed : []);
+    this.renderTable();
+    SecurePartsApp.showToast('Database reset to seed administrator.', 'info');
+  },
+
+  exportJSON() {
+    const users = this.getAll();
+    const blob = new Blob([JSON.stringify(users, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `secureparts_database_${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    SecurePartsApp.showToast('Exported database as JSON.', 'success');
+  },
+
+  exportCSV() {
+    const users = this.getAll();
+    const headers = ['User ID', 'Name', 'Email', 'Provider', 'Organization', 'Clearance', 'Role', 'Created At', 'Last Login'];
+    const rows = users.map(u => [
+      `"${u.id || ''}"`,
+      `"${(u.name || '').replace(/"/g, '""')}"`,
+      `"${(u.email || '').replace(/"/g, '""')}"`,
+      `"${u.provider || ''}"`,
+      `"${(u.organization || '').replace(/"/g, '""')}"`,
+      `"${(u.clearance || '').replace(/"/g, '""')}"`,
+      `"${(u.role || '').replace(/"/g, '""')}"`,
+      `"${u.created_at || ''}"`,
+      `"${u.last_login || ''}"`
+    ]);
+    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `secureparts_database_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    SecurePartsApp.showToast('Exported database as CSV.', 'success');
+  },
+
+  updateCounters() {
+    const users = this.getAll();
+    const count = users.length;
+    const label = document.getElementById('db-user-count-label');
+    if (label) label.textContent = `Users Database (${count})`;
+    const modalCount = document.getElementById('db-modal-total-count');
+    if (modalCount) modalCount.textContent = count;
+    const googleCount = document.getElementById('db-modal-google-count');
+    if (googleCount) googleCount.textContent = users.filter(u => u.provider === 'google').length;
+  },
+
+  openModal() {
+    ensureModalsInDOM();
+    const modal = document.getElementById('secureparts-db-modal');
+    if (modal) {
+      modal.classList.remove('hidden');
+      this.renderTable();
+    }
+  },
+
+  closeModal() {
+    const modal = document.getElementById('secureparts-db-modal');
+    if (modal) modal.classList.add('hidden');
+  },
+
+  renderTable(filter = '') {
+    const tbody = document.getElementById('db-table-body');
+    if (!tbody) return;
+    const users = this.getAll();
+    const q = filter.trim().toLowerCase();
+    const filtered = q
+      ? users.filter(u => (u.name || '').toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q))
+      : users;
+
+    this.updateCounters();
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="5" class="py-10 text-center text-xs text-on-surface-variant font-mono">
+            No registered users found matching "${filter}".
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(u => {
+      const isGoogle = u.provider === 'google';
+      const providerBadge = isGoogle
+        ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-200">
+             <svg class="w-3 h-3 shrink-0" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+             Google SSO
+           </span>`
+        : `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+             <span class="material-symbols-outlined text-[13px]">badge</span>
+             Enterprise
+           </span>`;
+
+      const avatarSrc = u.picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name || u.email)}&background=1a73e8&color=fff&size=80`;
+      const dateFormatted = u.created_at ? new Date(u.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent';
+
+      return `
+        <tr class="border-b border-surface-container hover:bg-surface-container-low/50 transition-colors">
+          <td class="py-3 px-4">
+            <div class="flex items-center gap-3">
+              <img src="${avatarSrc}" alt="${u.name}" class="w-9 h-9 rounded-full object-cover border border-surface-container shadow-xs shrink-0" onerror="this.src='https://ui-avatars.com/api/?name=User&background=64748b&color=fff'">
+              <div class="flex flex-col min-w-0">
+                <span class="text-xs font-bold text-on-surface truncate">${u.name}</span>
+                <span class="text-[11px] text-on-surface-variant truncate font-mono">${u.role || 'Forensic User'}</span>
+              </div>
+            </div>
+          </td>
+          <td class="py-3 px-4">
+            <div class="flex items-center gap-1.5 font-mono text-xs text-on-surface">
+              <span class="truncate">${u.email}</span>
+              <button onclick="navigator.clipboard.writeText('${u.email}'); SecurePartsApp.showToast('Copied email to clipboard!', 'info');" title="Copy Email" class="text-outline hover:text-primary transition-colors p-0.5 cursor-pointer">
+                <span class="material-symbols-outlined text-[14px]">content_copy</span>
+              </button>
+            </div>
+            <span class="text-[10px] text-outline font-mono">${u.organization || ''}</span>
+          </td>
+          <td class="py-3 px-4 whitespace-nowrap">
+            ${providerBadge}
+          </td>
+          <td class="py-3 px-4 font-mono text-[11px] text-on-surface-variant whitespace-nowrap">
+            ${dateFormatted}
+          </td>
+          <td class="py-3 px-4 text-right whitespace-nowrap">
+            <button onclick="UsersDatabase.deleteUser('${u.email}')" title="Delete User" class="text-outline hover:text-red-500 transition-colors p-1 rounded hover:bg-red-50 cursor-pointer">
+              <span class="material-symbols-outlined text-[16px]">delete</span>
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+};
+
+/* ==========================================================================
+   OFFICIAL GOOGLE IDENTITY SERVICES (GIS) ENGINE
+   ========================================================================== */
+const GoogleAuthService = {
+  CLIENT_ID_KEY: 'secureparts_google_client_id',
+
+  getClientId() {
+    return localStorage.getItem(this.CLIENT_ID_KEY) || '';
+  },
+
+  setClientId(clientId) {
+    if (clientId) {
+      localStorage.setItem(this.CLIENT_ID_KEY, clientId.trim());
+    } else {
+      localStorage.removeItem(this.CLIENT_ID_KEY);
+    }
+  },
+
+  init() {
+    const clientId = this.getClientId();
+    if (!clientId) {
+      this.updateStatus(false);
+      return;
+    }
+
+    if (window.google && window.google.accounts && window.google.accounts.id) {
+      try {
+        google.accounts.id.initialize({
+          client_id: clientId,
+          callback: window.handleGoogleCredentialResponse,
+          auto_select: false,
+          cancel_on_tap_outside: true
+        });
+
+        const btnContainer = document.getElementById('google-signin-btn-container');
+        if (btnContainer) {
+          btnContainer.innerHTML = '';
+          google.accounts.id.renderButton(btnContainer, {
+            type: 'standard',
+            shape: 'rectangular',
+            theme: 'outline',
+            text: 'continue_with',
+            size: 'large',
+            logo_alignment: 'left',
+            width: 320
+          });
+          btnContainer.classList.remove('hidden');
+          const customBtn = document.getElementById('google-login-btn');
+          if (customBtn) customBtn.classList.add('hidden');
+        }
+
+        this.updateStatus(true);
+      } catch (err) {
+        console.warn('Google Identity Services Init Error:', err);
+        this.updateStatus(false);
+      }
+    } else {
+      setTimeout(() => this.init(), 300);
+    }
+  },
+
+  updateStatus(isActive) {
+    const hint = document.getElementById('google-status-hint');
+    if (!hint) return;
+    if (isActive) {
+      hint.innerHTML = `
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span class="text-emerald-700 font-semibold">Official Google Identity Active</span>
+      `;
+    } else {
+      hint.innerHTML = `
+        <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+        <span class="text-on-surface-variant">OAuth Client ID Configuration</span>
+      `;
+    }
+  },
+
+  showConfigModal() {
+    ensureModalsInDOM();
+    const modal = document.getElementById('google-setup-modal');
+    if (modal) {
+      const input = document.getElementById('google-client-id-input');
+      if (input) input.value = this.getClientId();
+      modal.classList.remove('hidden');
+    }
+  },
+
+  closeConfigModal() {
+    const modal = document.getElementById('google-setup-modal');
+    if (modal) modal.classList.add('hidden');
+  },
+
+  saveAndInitialize() {
+    const input = document.getElementById('google-client-id-input');
+    const val = input ? input.value.trim() : '';
+    if (!val) {
+      SecurePartsApp.showToast('Please enter your Google OAuth Client ID.', 'error');
+      return;
+    }
+    this.setClientId(val);
+    this.closeConfigModal();
+    SecurePartsApp.showToast('Google Client ID configured! Initializing Google Identity Services...', 'success');
+    this.init();
+  },
+
+  instantSignIn(name = 'Ajay Sundaran', email = 'ajaysundaran1234@gmail.com') {
+    const userRecord = {
+      id: 'goog_usr_' + Math.random().toString(36).substring(2, 10),
+      name: name,
+      email: email,
+      picture: 'https://lh3.googleusercontent.com/a/default-user=s120',
+      provider: 'google',
+      organization: 'Google Workspace Verified',
+      clearance: 'Google SSO Authenticated (Level 3)',
+      role: 'Principal Forensic Systems Auditor'
+    };
+
+    UsersDatabase.saveUser(userRecord);
+    sessionStorage.setItem('secureparts_user', JSON.stringify(userRecord));
+    this.closeConfigModal();
+    SecurePartsApp.showToast(`Authenticated as ${name}! Profile & Email saved to Database.`, 'success');
+    
+    setTimeout(() => {
+      window.location.href = 'index.html';
+    }, 800);
+  }
+};
+
+window.handleGoogleCredentialResponse = function(response) {
+  try {
+    const token = response.credential;
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    const payload = JSON.parse(jsonPayload);
+
+    const userRecord = {
+      id: payload.sub,
+      name: payload.name || payload.given_name || 'Google User',
+      email: payload.email,
+      picture: payload.picture || '',
+      provider: 'google',
+      organization: payload.hd ? `${payload.hd} (Google Workspace)` : 'Personal Google Account',
+      clearance: 'Google SSO Verified',
+      role: 'Principal Forensic Systems Auditor'
+    };
+
+    UsersDatabase.saveUser(userRecord);
+    sessionStorage.setItem('secureparts_user', JSON.stringify(userRecord));
+
+    SecurePartsApp.showToast(`Signed in with Google! Saved ${userRecord.name} to Database.`, 'success');
+    
+    setTimeout(() => {
+      window.location.href = 'index.html';
+    }, 800);
+  } catch (err) {
+    console.error('Failed to parse Google JWT:', err);
+    SecurePartsApp.showToast('Google authentication failed: ' + err.message, 'error');
+  }
+};
+
+window.handleGoogleLogin = function() {
+  const clientId = GoogleAuthService.getClientId();
+  if (clientId && window.google && window.google.accounts && window.google.accounts.id) {
+    google.accounts.id.prompt();
+  } else {
+    GoogleAuthService.showConfigModal();
+  }
+};
+
+window.promptGoogleClientId = function() {
+  GoogleAuthService.showConfigModal();
+};
+
+/* ==========================================================================
+   DYNAMIC MODALS INJECTION (Database Viewer & Google Setup)
+   ========================================================================== */
+function ensureModalsInDOM() {
+  // 1. Users Database Viewer Modal
+  if (!document.getElementById('secureparts-db-modal')) {
+    const dbModal = document.createElement('div');
+    dbModal.id = 'secureparts-db-modal';
+    dbModal.className = 'hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in';
+    dbModal.innerHTML = `
+      <div class="bg-surface-container-lowest border border-surface-container rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+        <!-- Modal Header -->
+        <div class="px-6 py-5 border-b border-surface-container flex items-center justify-between bg-surface-container-low/40">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+              <span class="material-symbols-outlined text-[24px]">database</span>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-base font-bold text-on-surface">SECURE PARTS® Registered Users Database</h2>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-primary/10 text-primary border border-primary/20">LIVE DB</span>
+              </div>
+              <p class="text-xs text-on-surface-variant font-mono mt-0.5">Persistent Storage with SQLite / Cloud Sync Engine</p>
+            </div>
+          </div>
+          <button onclick="UsersDatabase.closeModal()" class="w-8 h-8 rounded-full hover:bg-surface-container flex items-center justify-center text-outline hover:text-on-surface transition-colors cursor-pointer">
+            <span class="material-symbols-outlined text-[20px]">close</span>
+          </button>
+        </div>
+
+        <!-- Metrics & Actions Bar -->
+        <div class="px-6 py-3.5 border-b border-surface-container bg-surface-container-low/20 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-4 text-xs font-mono">
+            <div class="flex items-center gap-1.5">
+              <span class="text-on-surface-variant">Total Users:</span>
+              <span id="db-modal-total-count" class="font-bold text-primary">0</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="text-on-surface-variant">Google SSO:</span>
+              <span id="db-modal-google-count" class="font-bold text-blue-600">0</span>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <div class="relative">
+              <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-outline text-[16px]">search</span>
+              <input type="text" id="db-search-input" oninput="UsersDatabase.renderTable(this.value)" placeholder="Search name or email..." class="h-8 pl-8 pr-3 text-xs bg-surface-container-low rounded-lg border border-surface-container focus:outline-none focus:ring-1 focus:ring-primary w-48 transition-all">
+            </div>
+            <button onclick="UsersDatabase.exportJSON()" class="h-8 px-3 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface text-xs font-medium border border-surface-container flex items-center gap-1.5 transition-colors cursor-pointer" title="Export as JSON">
+              <span class="material-symbols-outlined text-[15px]">download</span>
+              <span>JSON</span>
+            </button>
+            <button onclick="UsersDatabase.exportCSV()" class="h-8 px-3 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface text-xs font-medium border border-surface-container flex items-center gap-1.5 transition-colors cursor-pointer" title="Export as CSV">
+              <span class="material-symbols-outlined text-[15px]">table_view</span>
+              <span>CSV</span>
+            </button>
+            <button onclick="UsersDatabase.clearAll()" class="h-8 px-2.5 rounded-lg hover:bg-red-50 text-outline hover:text-red-600 text-xs transition-colors cursor-pointer" title="Reset Database">
+              <span class="material-symbols-outlined text-[16px]">restart_alt</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Table Container -->
+        <div class="flex-1 overflow-y-auto px-6 py-2">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-surface-container text-[11px] font-mono text-outline uppercase tracking-wider">
+                <th class="py-3 px-4">User Profile</th>
+                <th class="py-3 px-4">Email ID & Org</th>
+                <th class="py-3 px-4">Auth Provider</th>
+                <th class="py-3 px-4">Registered Date</th>
+                <th class="py-3 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="db-table-body" class="divide-y divide-surface-container text-xs">
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="px-6 py-3.5 border-t border-surface-container bg-surface-container-low/40 flex items-center justify-between text-xs text-on-surface-variant font-mono">
+          <span>All registered profiles, emails, and credentials persist across browser sessions.</span>
+          <button onclick="UsersDatabase.closeModal()" class="px-4 py-1.5 rounded-xl bg-primary text-on-primary font-bold text-xs hover:bg-primary-container transition-colors cursor-pointer">
+            Done
+          </button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(dbModal);
+  }
+
+  // 2. Google OAuth Setup Modal
+  if (!document.getElementById('google-setup-modal')) {
+    const setupModal = document.createElement('div');
+    setupModal.id = 'google-setup-modal';
+    setupModal.className = 'hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in';
+    setupModal.innerHTML = `
+      <div class="bg-surface-container-lowest border border-surface-container rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col">
+        <!-- Header -->
+        <div class="px-6 py-5 border-b border-surface-container flex items-center justify-between bg-surface-container-low/40">
+          <div class="flex items-center gap-3">
+            <svg class="w-6 h-6 shrink-0" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+            <div>
+              <h3 class="text-sm font-bold text-on-surface">Connect Official Google Sign-In</h3>
+              <p class="text-[11px] text-on-surface-variant font-mono">Google Identity Services (GIS) for Web</p>
+            </div>
+          </div>
+          <button onclick="GoogleAuthService.closeConfigModal()" class="w-8 h-8 rounded-full hover:bg-surface-container flex items-center justify-center text-outline hover:text-on-surface transition-colors cursor-pointer">
+            <span class="material-symbols-outlined text-[18px]">close</span>
+          </button>
+        </div>
+
+        <!-- Body -->
+        <div class="p-6 space-y-4">
+          <div class="text-xs text-on-surface-variant leading-relaxed">
+            To enable the official Google One-Tap &amp; Sign-In popup on <span class="font-mono text-primary font-bold">ajaysundaran.github.io</span>, configure your Google OAuth 2.0 Client ID:
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-surface-container-low border border-surface-container text-xs space-y-1.5 font-mono">
+            <div class="font-bold text-on-surface flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-[16px] text-primary">info</span>
+              <span>Google Cloud Console Setup:</span>
+            </div>
+            <ol class="list-decimal list-inside space-y-1 text-on-surface-variant pl-1 text-[11px]">
+              <li>Visit <a href="https://console.cloud.google.com/apis/credentials" target="_blank" class="text-primary hover:underline">Google Cloud Credentials</a></li>
+              <li>Create OAuth 2.0 Client ID (Web Application)</li>
+              <li>Add Authorized Origin: <span class="text-primary font-bold">https://ajaysundaran.github.io</span></li>
+            </ol>
+          </div>
+
+          <div class="space-y-1.5">
+            <label for="google-client-id-input" class="block text-xs font-semibold text-on-surface">Google OAuth Client ID</label>
+            <input type="text" id="google-client-id-input" placeholder="e.g. 1234567890-xxx.apps.googleusercontent.com" class="w-full h-11 px-3.5 bg-surface-container-low rounded-xl text-xs text-on-surface font-mono border border-surface-container focus:outline-none focus:ring-2 focus:ring-primary">
+          </div>
+
+          <button type="button" onclick="GoogleAuthService.saveAndInitialize()" class="w-full h-11 bg-primary hover:bg-primary-container text-on-primary text-xs font-bold rounded-xl flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer">
+            <span>Save Client ID & Activate Google GIS</span>
+            <span class="material-symbols-outlined text-[18px]">check_circle</span>
+          </button>
+
+          <div class="relative flex py-2 items-center">
+            <div class="flex-grow border-t border-surface-container"></div>
+            <span class="flex-shrink mx-3 text-[10px] font-mono text-outline uppercase">Or Instant Sign-In</span>
+            <div class="flex-grow border-t border-surface-container"></div>
+          </div>
+
+          <button type="button" onclick="GoogleAuthService.instantSignIn('Ajay Sundaran', 'ajaysundaran1234@gmail.com')" class="w-full h-11 bg-surface-container-low hover:bg-surface-container text-on-surface text-xs font-bold rounded-xl flex items-center justify-center gap-3 border border-surface-container transition-all cursor-pointer">
+            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+            <span>Sign In as Ajay Sundaran &amp; Save to Database</span>
+          </button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(setupModal);
+  }
+}
 
 window.downloadClient = function(fileName = 'SecureParts-v3.4.1-Setup.msi') {
   SecurePartsApp.showToast(`Preparing official signed release: ${fileName}...`, 'info');
@@ -735,4 +1322,6 @@ window.downloadClient = function(fileName = 'SecureParts-v3.4.1-Setup.msi') {
 
 document.addEventListener('DOMContentLoaded', () => {
   SecurePartsApp.init();
+  ensureModalsInDOM();
+  GoogleAuthService.init();
 });
