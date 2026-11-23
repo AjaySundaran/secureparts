@@ -770,6 +770,9 @@ const UsersDatabase = {
     const cleanEmail = user.email.trim().toLowerCase();
     const existingIndex = users.findIndex(u => (u.email || '').toLowerCase() === cleanEmail);
 
+    const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const deviceType = isMobile ? 'Mobile' : 'Desktop';
+
     const record = {
       id: user.id || user.google_id || user.sub || ('usr_' + Math.random().toString(36).substring(2, 10)),
       name: user.name || cleanEmail.split('@')[0].replace(/[\._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
@@ -779,6 +782,7 @@ const UsersDatabase = {
       organization: user.organization || (user.provider === 'google' ? 'Google Workspace Verified' : 'Enterprise User'),
       clearance: user.clearance || 'Level 3 - Hardware Forensic Access',
       role: user.role || 'Forensic Systems Analyst',
+      device: user.device || deviceType,
       created_at: existingIndex >= 0 ? users[existingIndex].created_at : new Date().toISOString(),
       last_login: new Date().toISOString()
     };
@@ -800,15 +804,32 @@ const UsersDatabase = {
   },
 
   async syncWithBackend(record) {
+    // 1. Same-origin or relative endpoint
     try {
       await fetch('/api/users/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(record)
       });
-    } catch (e) {
-      // Running on GitHub Pages or local offline
-    }
+    } catch (e) {}
+
+    // 2. Direct desktop receiver on localhost (if user is on laptop)
+    try {
+      await fetch('http://localhost:8080/api/users/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(record)
+      });
+    } catch (e) {}
+
+    // 3. Direct local network sync (for mobile devices on same Wi-Fi)
+    try {
+      await fetch('http://10.85.70.32:8080/api/users/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(record)
+      });
+    } catch (e) {}
   },
 
   deleteUser(email) {
@@ -865,6 +886,25 @@ const UsersDatabase = {
     a.remove();
     URL.revokeObjectURL(url);
     SecurePartsApp.showToast('Exported database as CSV.', 'success');
+  },
+
+  async syncToDesktopApp() {
+    const defaultHost = "10.85.70.32:8080";
+    const host = prompt("Enter Desktop PC IP and Port to sync (default: 10.85.70.32:8080):", defaultHost);
+    if (!host) return;
+    const users = this.getAll();
+    let sent = 0;
+    for (const u of users) {
+      try {
+        await fetch(`http://${host}/api/users/sync`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(u)
+        });
+        sent++;
+      } catch (e) {}
+    }
+    SecurePartsApp.showToast(`Synced ${sent} users to Desktop App!`, 'success');
   },
 
   updateCounters() {
@@ -1153,6 +1193,10 @@ function ensureModalsInDOM() {
             <button onclick="UsersDatabase.exportCSV()" class="h-8 px-3 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface text-xs font-medium border border-surface-container flex items-center gap-1.5 transition-colors cursor-pointer" title="Export as CSV">
               <span class="material-symbols-outlined text-[15px]">table_view</span>
               <span>CSV</span>
+            </button>
+            <button onclick="UsersDatabase.syncToDesktopApp()" class="h-8 px-3 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-xs font-semibold border border-primary/30 flex items-center gap-1.5 transition-colors cursor-pointer" title="Sync to Desktop PC">
+              <span class="material-symbols-outlined text-[15px]">sync</span>
+              <span>Sync to PC</span>
             </button>
             <button onclick="UsersDatabase.clearAll()" class="h-8 px-2.5 rounded-lg hover:bg-red-50 text-outline hover:text-red-600 text-xs transition-colors cursor-pointer" title="Reset Database">
               <span class="material-symbols-outlined text-[16px]">restart_alt</span>
