@@ -1134,11 +1134,65 @@ window.handleGoogleCredentialResponse = function(response) {
 
 window.handleGoogleLogin = function() {
   const clientId = GoogleAuthService.getClientId();
+  
+  // Official Google OAuth 2.0 Token Client:
+  // 1. Opens accounts.google.com popup
+  // 2. Asks user to select account
+  // 3. Asks user for permission to use their name and email
+  // 4. Retrieves profile (name, picture, email) and logs them in
+  if (clientId && window.google && window.google.accounts && window.google.accounts.oauth2) {
+    try {
+      const tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: 'https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email openid',
+        callback: async (tokenResponse) => {
+          if (tokenResponse && tokenResponse.access_token) {
+            const btn = document.getElementById('google-login-btn');
+            if (btn) btn.innerHTML = `<span class="material-symbols-outlined text-[18px] animate-spin">refresh</span><span>Connecting with Google...</span>`;
+            try {
+              const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
+              });
+              const profile = await res.json();
+              if (profile && profile.email) {
+                const userRecord = {
+                  id: profile.sub,
+                  name: profile.name || profile.given_name || profile.email.split('@')[0],
+                  email: profile.email,
+                  picture: profile.picture || '',
+                  provider: 'google',
+                  organization: profile.hd ? `${profile.hd} (Google Workspace)` : 'Google Account Verified',
+                  clearance: 'Google SSO Verified',
+                  role: 'Hardware Forensics Analyst'
+                };
+
+                // Commit user profile to persistent database
+                UsersDatabase.saveUser(userRecord);
+                sessionStorage.setItem('secureparts_user', JSON.stringify(userRecord));
+                SecurePartsApp.showToast(`Signed in with Google as ${userRecord.name}! Saved to database.`, 'success');
+                setTimeout(() => window.location.href = 'index.html', 800);
+              }
+            } catch (err) {
+              console.error('Error fetching Google userinfo:', err);
+              SecurePartsApp.showToast('Failed to fetch Google profile: ' + err.message, 'error');
+            }
+          }
+        }
+      });
+      tokenClient.requestAccessToken({ prompt: 'consent' });
+      return;
+    } catch (e) {
+      console.warn('OAuth2 client init error:', e);
+    }
+  }
+
   if (clientId && window.google && window.google.accounts && window.google.accounts.id) {
     google.accounts.id.prompt();
-  } else {
-    GoogleAuthService.showConfigModal();
+    return;
   }
+
+  // If Client ID is not yet configured, show friendly prompt
+  GoogleAuthService.showConfigModal();
 };
 
 window.promptGoogleClientId = function() {
