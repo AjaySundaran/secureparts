@@ -869,6 +869,45 @@ const UsersDatabase = {
     return this.syncAllToCloud(true);
   },
 
+  async pullFromCloud(showToast = false) {
+    try {
+      const res = await fetch(`${this.CLOUD_SYNC_URL}/json?poll=1&since=all`);
+      if (!res.ok) return 0;
+      const text = await res.text();
+      const lines = text.trim().split('\n');
+      const users = this.getAll();
+      let imported = 0;
+      for (const line of lines) {
+        if (!line) continue;
+        try {
+          const obj = JSON.parse(line);
+          if (obj.event === 'message' && obj.message) {
+            const u = JSON.parse(obj.message);
+            if (u && u.email) {
+              const cleanEmail = u.email.trim().toLowerCase();
+              const existingIdx = users.findIndex(x => (x.email || '').toLowerCase() === cleanEmail);
+              if (existingIdx >= 0) {
+                users[existingIdx] = { ...users[existingIdx], ...u };
+              } else {
+                users.unshift(u);
+                imported++;
+              }
+            }
+          }
+        } catch (e) {}
+      }
+      this.saveAll(users);
+      this.renderTable();
+      if (showToast && window.SecurePartsApp) {
+        SecurePartsApp.showToast(`Synced ${users.length} total users across all devices!`, 'success');
+      }
+      return imported;
+    } catch (e) {
+      console.warn('[UsersDatabase] pullFromCloud notice:', e);
+      return 0;
+    }
+  },
+
   updateCounters() {
     const users = this.getAll();
     const count = users.length;
@@ -886,6 +925,7 @@ const UsersDatabase = {
     if (modal) {
       modal.classList.remove('hidden');
       this.renderTable();
+      this.pullFromCloud();
     }
   },
 
@@ -1156,9 +1196,13 @@ function ensureModalsInDOM() {
               <span class="material-symbols-outlined text-[15px]">table_view</span>
               <span>CSV</span>
             </button>
+            <button onclick="UsersDatabase.pullFromCloud(true)" class="h-8 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm" title="Pull latest users from all devices">
+              <span class="material-symbols-outlined text-[15px]">cloud_download</span>
+              <span>Sync Cloud</span>
+            </button>
             <button onclick="UsersDatabase.syncAllToCloud(true)" class="h-8 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm" title="Push to Desktop App via Cloud">
               <span class="material-symbols-outlined text-[15px]">cloud_upload</span>
-              <span>Push to Desktop App</span>
+              <span>Push to Cloud</span>
             </button>
             <button onclick="UsersDatabase.clearAll()" class="h-8 px-2.5 rounded-lg hover:bg-red-50 text-outline hover:text-red-600 text-xs transition-colors cursor-pointer" title="Reset Database">
               <span class="material-symbols-outlined text-[16px]">restart_alt</span>
@@ -1219,10 +1263,11 @@ document.addEventListener('DOMContentLoaded', () => {
   SecurePartsApp.init();
   ensureModalsInDOM();
   GoogleAuthService.init();
-  // Automatically sync local registered users up to the Cloud & Desktop App
+  // Automatically pull all users from cloud and push any local records
   setTimeout(() => {
-    if (typeof UsersDatabase !== 'undefined' && UsersDatabase.syncAllToCloud) {
+    if (typeof UsersDatabase !== 'undefined') {
+      UsersDatabase.pullFromCloud(false);
       UsersDatabase.syncAllToCloud(false);
     }
-  }, 1200);
+  }, 800);
 });
