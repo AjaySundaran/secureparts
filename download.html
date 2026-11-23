@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Download SecureParts for Windows | Official Release v3.4.1</title>
+  <meta name="description" content="Download ALGOFED SecureParts desktop client for Windows 11 and 10. Enterprise signed, SHA-256 verified, air-gapped component validation suite.">
+  
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <style>
+    @layer base {
+      html, body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+      body { overscroll-behavior: none; }
+    }
+  </style>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface": "#f8f9ff",
+            "surface-dim": "#cbdbf5",
+            "surface-bright": "#f8f9ff",
+            "surface-container-lowest": "#ffffff",
+            "surface-container-low": "#eff4ff",
+            "surface-container": "#e5eeff",
+            "surface-container-high": "#dce9ff",
+            "surface-container-highest": "#d3e4fe",
+            "on-surface": "#0b1c30",
+            "on-surface-variant": "#434655",
+            "primary": "#004ac6",
+            "on-primary": "#ffffff",
+            "primary-container": "#2563eb",
+            "on-primary-container": "#eeefff",
+            "primary-fixed": "#dbe1ff",
+            "secondary": "#0060ac",
+            "on-secondary": "#ffffff",
+            "secondary-container": "#64a8fe",
+            "secondary-fixed": "#d4e3ff",
+            "tertiary": "#005b7c",
+            "on-tertiary": "#ffffff",
+            "tertiary-container": "#00759f",
+            "tertiary-fixed": "#c4e7ff",
+            "outline": "#737686",
+            "outline-variant": "#c3c6d7",
+            "error": "#ba1a1a"
+          },
+          fontFamily: {
+            "code-mono": ["JetBrains Mono", "monospace"],
+            "display-lg": ["Inter", "sans-serif"]
+          },
+          spacing: {
+            "space-xs": "0.25rem",
+            "space-sm": "0.5rem",
+            "space-md": "1rem",
+            "space-lg": "1.5rem",
+            "space-xl": "2.5rem",
+            "margin": "2rem",
+            "gutter": "1.5rem"
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="bg-surface-container-lowest font-body-md text-body-md text-on-surface antialiased min-h-screen flex flex-col relative overflow-x-hidden selection:bg-secondary-fixed selection:text-on-secondary-fixed">
+  
+  <div class="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-surface-container-high/40 via-surface-container-lowest/0 to-surface-container-lowest"></div>
+
+  <!-- Header Navigation -->
+  <header class="fixed top-0 inset-x-0 z-50 transition-all duration-300 backdrop-blur-md bg-surface-container-lowest/85 border-b border-surface-container shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
+    <div class="h-20 w-full px-margin flex items-center justify-between gap-gutter">
+      <div class="flex items-center gap-space-md shrink-0">
+        <a href="index.html" class="flex items-center gap-3 group">
+          <img src="assets/logo_main.png" alt="SECURE PARTS® Logo" class="h-12 sm:h-14 w-auto object-contain transition-transform duration-200 group-hover:scale-105">
+          <div class="flex flex-col">
+            <span class="font-headline-sm text-headline-sm text-on-surface tracking-tight font-extrabold text-xl leading-none">SECURE PARTS<span class="text-primary text-sm font-bold">®</span></span>
+            <span class="font-mono text-[10px] text-tertiary tracking-widest uppercase mt-0.5 font-bold">Universal Anti-Tamper & Forensics</span>
+          </div>
+        </a>
+      </div>
+
+      <nav class="hidden xl:flex items-center gap-space-sm p-space-xs">
+        <a class="px-space-md py-space-xs font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors" data-path="home" href="index.html">Home</a>
+        <a class="px-space-md py-space-xs font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors" data-path="features" href="index.html#features">Features</a>
+        <a class="px-space-md py-space-xs font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors" data-path="how-it-works" href="index.html#how-it-works">How It Works</a>
+        <a class="px-space-md py-space-xs font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors" data-path="pricing" href="pricing.html">Pricing</a>
+        <a aria-current="page" class="px-space-md py-space-xs transition-colors bg-surface-container-high text-primary font-semibold rounded-lg" data-path="download" href="download.html">Download</a>
+        <a class="px-space-md py-space-xs font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors" data-path="about" href="index.html#how-it-works">About</a>
+      </nav>
+
+      <div class="flex items-center gap-space-md shrink-0">
+        <a class="hidden sm:inline-block font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors py-space-xs px-space-sm font-semibold text-xs" data-path="login" href="login.html">Sign In / Register</a>
+        <a class="bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md px-space-md py-space-sm rounded-lg shadow-[0_4px_14px_rgba(37,99,235,0.25)] flex items-center gap-space-xs transition-all" data-path="download" href="download.html">
+          <span class="material-symbols-outlined text-[18px]">download</span>
+          <span>Download SecureParts</span>
+        </a>
+        <a href="login.html" class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0 text-on-primary hover:opacity-90 transition-opacity">
+          <span class="material-symbols-outlined text-[18px]">person</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="w-full pt-20 flex-1 relative z-10">
+    <div class="flex flex-col w-full">
+      <div class="relative w-full overflow-hidden">
+        <div class="absolute -top-32 left-1/2 -translate-x-1/2 w-[980px] h-[480px] bg-gradient-to-b from-primary-fixed/30 via-secondary-fixed/20 to-transparent blur-3xl pointer-events-none rounded-full"></div>
+        <div class="absolute top-72 -right-24 w-80 h-80 bg-secondary-container/15 blur-2xl pointer-events-none rounded-full"></div>
+
+        <div class="max-w-7xl mx-auto px-margin py-space-xl relative z-10">
+          <!-- HERO DOWNLOAD SECTION -->
+          <div class="flex flex-col items-center text-center max-w-4xl mx-auto pt-space-lg pb-space-xl">
+            <div class="inline-flex items-center gap-space-xs px-space-md py-space-xs rounded-full bg-surface-container-high/60 backdrop-blur-md shadow-xs mb-space-md">
+              <span class="w-2 h-2 rounded-full bg-primary-container animate-pulse"></span>
+              <span class="font-mono text-xs text-primary font-semibold tracking-wider">LATEST STABLE RELEASE • VERSION 3.4.1</span>
+              <span class="bg-surface-container-lowest text-primary text-[10px] font-bold px-2 py-0.5 rounded-full shadow-xs">PROD</span>
+            </div>
+
+            <h1 class="text-4xl md:text-5xl font-bold text-on-surface tracking-tight max-w-3xl">
+              Download SecureParts for Windows
+            </h1>
+            <p class="text-lg text-on-surface-variant mt-space-sm max-w-2xl leading-relaxed">
+              The complete hardware component verification desktop suite. Engineered for high-speed micro-geometry analysis and zero-trust silicon provenance.
+            </p>
+
+            <!-- Actions -->
+            <div class="mt-space-xl flex flex-col sm:flex-row items-center gap-space-md w-full justify-center">
+              <button onclick="downloadClient('SecureParts-v3.4.1-Setup.msi')" class="group relative inline-flex items-center justify-between gap-space-md bg-gradient-to-r from-primary to-primary-container hover:from-primary hover:to-secondary text-on-primary font-medium px-space-lg py-space-md rounded-xl shadow-lg shadow-primary-container/25 transition-all duration-200 transform hover:-translate-y-0.5 cursor-pointer">
+                <div class="flex items-center gap-space-sm">
+                  <span class="material-symbols-outlined text-[24px]">desktop_windows</span>
+                  <div class="flex flex-col text-left">
+                    <span class="text-lg font-bold leading-tight">Download SecureParts v3.4.1</span>
+                    <span class="text-xs text-primary-fixed opacity-90">64-bit Official Installer for Windows</span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-1.5 pl-space-sm">
+                  <span class="px-2 py-1 bg-surface-container-lowest/20 rounded font-mono text-xs text-on-primary whitespace-nowrap">142 MB .msi</span>
+                  <span class="material-symbols-outlined text-[20px] transition-transform group-hover:translate-y-0.5">download</span>
+                </div>
+              </button>
+
+              <div class="flex items-center gap-space-xs">
+                <button onclick="downloadClient('SecureParts-v3.4.1-Portable.zip')" class="inline-flex items-center gap-space-xs bg-surface-container-lowest hover:bg-surface-container text-on-surface text-xs font-semibold px-space-md py-space-md rounded-xl shadow-xs transition-colors border border-surface-container">
+                  <span class="material-symbols-outlined text-[20px] text-on-surface-variant">folder_zip</span>
+                  <span>Portable (.zip)</span>
+                </button>
+                <button onclick="downloadClient('SecureParts-v3.4.1-Enterprise.msi')" class="inline-flex items-center gap-space-xs bg-surface-container-lowest hover:bg-surface-container text-on-surface text-xs font-semibold px-space-md py-space-md rounded-xl shadow-xs transition-colors border border-surface-container">
+                  <span class="material-symbols-outlined text-[20px] text-on-surface-variant">corporate_fare</span>
+                  <span>Enterprise MSI</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Authenticity Micro Badge -->
+            <div class="mt-space-md flex flex-wrap items-center justify-center gap-space-md text-on-surface-variant text-xs">
+              <div class="flex items-center gap-1">
+                <span class="material-symbols-outlined text-[16px] text-tertiary">verified</span>
+                <span>EV Code Signed by ALGOFED INC.</span>
+              </div>
+              <span class="inline-block w-1 h-1 rounded-full bg-outline-variant"></span>
+              <div class="flex items-center gap-1">
+                <span class="material-symbols-outlined text-[16px] text-primary">security</span>
+                <span>Clean: 0/72 Detections (VirusTotal Verified)</span>
+              </div>
+              <span class="inline-block w-1 h-1 rounded-full bg-outline-variant"></span>
+              <div class="flex items-center gap-1">
+                <span class="material-symbols-outlined text-[16px] text-on-surface-variant">schedule</span>
+                <span>Updated Build: Cerberus-X</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- SYSTEM COMPATIBILITY GRID -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-space-md mb-space-xl">
+            <div class="bg-surface-container-lowest/80 backdrop-blur-md rounded-xl p-space-md shadow-xs border border-surface-container">
+              <div class="flex items-center gap-space-xs text-primary mb-space-xs">
+                <span class="material-symbols-outlined text-[20px]">laptop_windows</span>
+                <span class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Operating System</span>
+              </div>
+              <p class="text-base font-bold text-on-surface">Windows 11 / 10</p>
+              <p class="text-xs text-on-surface-variant mt-0.5">Build 19044 or later (64-bit)</p>
+            </div>
+
+            <div class="bg-surface-container-lowest/80 backdrop-blur-md rounded-xl p-space-md shadow-xs border border-surface-container">
+              <div class="flex items-center gap-space-xs text-tertiary mb-space-xs">
+                <span class="material-symbols-outlined text-[20px]">memory</span>
+                <span class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Architecture</span>
+              </div>
+              <p class="text-base font-bold text-on-surface">x64 & ARM64</p>
+              <p class="text-xs text-on-surface-variant mt-0.5">Native AVX-512 & ARM translation</p>
+            </div>
+
+            <div class="bg-surface-container-lowest/80 backdrop-blur-md rounded-xl p-space-md shadow-xs border border-surface-container">
+              <div class="flex items-center gap-space-xs text-secondary mb-space-xs">
+                <span class="material-symbols-outlined text-[20px]">storage</span>
+                <span class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">RAM Allocation</span>
+              </div>
+              <p class="text-base font-bold text-on-surface">4 GB Min (8 GB Rec)</p>
+              <p class="text-xs text-on-surface-variant mt-0.5">Dynamic heap allocation</p>
+            </div>
+
+            <div class="bg-surface-container-lowest/80 backdrop-blur-md rounded-xl p-space-md shadow-xs border border-surface-container">
+              <div class="flex items-center gap-space-xs text-primary mb-space-xs">
+                <span class="material-symbols-outlined text-[20px]">hard_drive</span>
+                <span class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Local Storage</span>
+              </div>
+              <p class="text-base font-bold text-on-surface">500 MB Free</p>
+              <p class="text-xs text-on-surface-variant mt-0.5">SSD recommended for local caches</p>
+            </div>
+          </div>
+
+          <!-- CRYPTOGRAPHIC INTEGRITY & CHANGELOG -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter mb-space-xl items-start" id="checksums">
+            <!-- Cryptographic Card -->
+            <div class="lg:col-span-7 bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md border border-surface-container">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-space-sm">
+                  <div class="w-9 h-9 rounded-lg bg-surface-container-high flex items-center justify-center text-primary">
+                    <span class="material-symbols-outlined text-[22px]">fingerprint</span>
+                  </div>
+                  <div>
+                    <h3 class="text-base font-bold text-on-surface">Cryptographic Integrity</h3>
+                    <p class="text-xs text-on-surface-variant">Zero-Trust distribution authentication checks</p>
+                  </div>
+                </div>
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-surface-container rounded-full text-primary text-xs font-semibold">
+                  <span class="w-1.5 h-1.5 rounded-full bg-primary animate-ping"></span>
+                  Verified Release
+                </span>
+              </div>
+
+              <!-- Hash Container -->
+              <div class="bg-surface-container-low rounded-lg p-space-md flex flex-col gap-space-sm">
+                <div class="flex items-center justify-between text-on-surface-variant text-xs">
+                  <span class="font-bold tracking-wider uppercase">Official SHA-256 Checksum</span>
+                  <span class="text-tertiary font-mono">64 BYTES / HEX</span>
+                </div>
+                <div class="flex items-center justify-between gap-space-sm bg-surface-container-lowest p-space-sm rounded-md shadow-inner border border-surface-container">
+                  <code class="font-mono text-on-surface select-all break-all text-xs font-semibold" id="sha256-code">e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</code>
+                  <button class="shrink-0 inline-flex items-center gap-1 bg-surface-container-high hover:bg-primary hover:text-on-primary text-on-surface text-xs font-semibold px-space-sm py-1.5 rounded transition-all cursor-pointer" onclick="copyOfficialHash()">
+                    <span class="material-symbols-outlined text-[16px]">content_copy</span>
+                    <span>Copy</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Drag and Drop Verification Box -->
+              <div class="border-2 border-dashed border-surface-container-high rounded-xl p-space-md flex flex-col items-center justify-center text-center gap-2 cursor-pointer transition-colors" id="checksum-dropzone" onclick="document.getElementById('checksum-file-input').click()">
+                <input type="file" id="checksum-file-input" class="hidden">
+                <span class="material-symbols-outlined text-3xl text-primary">verified</span>
+                <span class="text-xs font-semibold text-on-surface">Drag & Drop Any Installer File to Verify Checksum Locally</span>
+                <span class="text-[11px] text-on-surface-variant">Runs 100% in-browser via Web Crypto API (No file uploads required)</span>
+                <div id="calculated-hash-output" class="text-xs font-mono text-tertiary break-all mt-1"></div>
+              </div>
+
+              <!-- Meta info -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-space-sm pt-space-xs text-xs">
+                <div class="bg-surface-container-low/70 p-space-sm rounded-lg flex flex-col border border-surface-container">
+                  <span class="text-[11px] font-bold text-on-surface-variant uppercase">GPG Release Signing Key</span>
+                  <span class="font-mono text-on-surface font-semibold mt-1">0x4A29B8F1</span>
+                  <span class="text-[11px] text-on-surface-variant">ALGOFED Security Authority</span>
+                </div>
+                <div class="bg-surface-container-low/70 p-space-sm rounded-lg flex flex-col border border-surface-container">
+                  <span class="text-[11px] font-bold text-on-surface-variant uppercase">Certificate Subject</span>
+                  <span class="font-mono text-on-surface font-semibold mt-1">CN=ALGOFED INC.</span>
+                  <span class="text-[11px] text-on-surface-variant">Issued by DigiCert EV Code CA</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Release Notes -->
+            <div class="lg:col-span-5 bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col justify-between border border-surface-container">
+              <div>
+                <div class="flex items-center justify-between mb-space-md">
+                  <div class="flex items-center gap-space-xs">
+                    <span class="material-symbols-outlined text-primary text-[22px]">new_releases</span>
+                    <h3 class="text-base font-bold text-on-surface">What’s New in v3.4.1</h3>
+                  </div>
+                  <span class="font-mono text-xs px-2 py-0.5 bg-surface-container text-on-surface font-semibold rounded">
+                    March 2026
+                  </span>
+                </div>
+                <ul class="flex flex-col gap-space-sm text-xs text-on-surface-variant">
+                  <li class="flex items-start gap-space-sm bg-surface-container-low/50 p-space-xs rounded-lg">
+                    <span class="material-symbols-outlined text-primary text-[18px] shrink-0 mt-0.5">check_circle</span>
+                    <span><strong>FPGA Pinout Heuristics:</strong> Real-time variance detection for high-density Xilinx UltraScale+ and Altera Stratix 10 families.</span>
+                  </li>
+                  <li class="flex items-start gap-space-sm bg-surface-container-low/50 p-space-xs rounded-lg">
+                    <span class="material-symbols-outlined text-primary text-[18px] shrink-0 mt-0.5">bolt</span>
+                    <span><strong>3x Accelerated Hashing:</strong> Optimized AVX-512 hardware pipelines for ultra-rapid gigabyte package inspections.</span>
+                  </li>
+                  <li class="flex items-start gap-space-sm bg-surface-container-low/50 p-space-xs rounded-lg">
+                    <span class="material-symbols-outlined text-primary text-[18px] shrink-0 mt-0.5">description</span>
+                    <span><strong>AS9100D Compliance Exporter:</strong> Direct standardized audit export with tamper-evident cryptographic watermarks.</span>
+                  </li>
+                  <li class="flex items-start gap-space-sm bg-surface-container-low/50 p-space-xs rounded-lg">
+                    <span class="material-symbols-outlined text-tertiary text-[18px] shrink-0 mt-0.5">build</span>
+                    <span><strong>3D Inspector Hotfix:</strong> Resolved sub-surface mesh artifacts during high-magnification ball grid array (BGA) rendering.</span>
+                  </li>
+                </ul>
+              </div>
+              <div class="pt-space-md mt-space-sm flex items-center justify-between border-t border-surface-container/60">
+                <span class="font-mono text-on-surface-variant text-xs">Build Hash: 4e99f0a2</span>
+                <span class="text-xs font-mono text-primary font-semibold">Ready for Deployment</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="w-full bg-surface-container-low border-t border-surface-container text-on-surface-variant relative z-10">
+    <div class="w-full px-margin py-space-xl max-w-[1440px] mx-auto">
+      <div class="pt-space-md flex flex-col sm:flex-row items-center justify-between gap-space-sm text-xs">
+        <p class="text-on-surface-variant">© 2026 ALGOFED Inc. All rights reserved. SecureParts Distribution Center.</p>
+        <div class="flex items-center gap-space-xs font-mono text-tertiary">
+          <span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+          <span>SHA-256 Mirrors: In Sync</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+  <script>
+    function copyOfficialHash() {
+      navigator.clipboard.writeText('e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855');
+      SecurePartsApp.showToast('Official SHA-256 checksum copied to clipboard!', 'success');
+    }
+
+    function downloadClient(fileName) {
+      SecurePartsApp.showToast(`Generating signed package payload for ${fileName}...`, 'info');
+      // Create a dummy download for demonstration
+      const blob = new Blob([
+        `ALGOFED SECUREPARTS DESKTOP CLIENT\nVersion: 3.4.1\nSignature: Verified EV Certificate CN=ALGOFED INC.\nSHA-256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\nStatus: Deterministic Package Ready.`
+      ], { type: 'application/octet-stream' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      setTimeout(() => {
+        SecurePartsApp.showToast(`Download started: ${fileName}`, 'success');
+      }, 600);
+    }
+  </script>
+</body>
+</html>

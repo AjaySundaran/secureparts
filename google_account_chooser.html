@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign in – Google Accounts</title>
+  <link rel="icon" href="https://www.google.com/favicon.ico">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Google Sans', 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #ffffff;
+      color: #202124;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .account-row {
+      transition: background-color 0.15s ease;
+    }
+    .account-row:hover {
+      background-color: #f1f3f4;
+    }
+    .account-row:active {
+      background-color: #e8eaed;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between p-8 bg-white">
+  
+  <div class="w-full max-w-md mx-auto">
+    <!-- Google Logo Header -->
+    <div class="flex flex-col items-center text-center mb-6">
+      <svg class="w-12 h-12 mb-3" viewBox="0 0 48 48">
+        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+        <path fill="none" d="M0 0h48v48H0z"/>
+      </svg>
+      <h1 class="text-[22px] font-normal text-[#202124] tracking-tight">
+        Choose an account
+      </h1>
+      <p class="text-sm text-[#5f6368] mt-1">
+        to continue to <span class="font-medium text-[#202124]">SECURE PARTS®</span>
+      </p>
+    </div>
+
+    <!-- Accounts List Container -->
+    <div class="border border-[#dadce0] rounded-lg overflow-hidden divide-y divide-[#dadce0] mb-4">
+      
+      <!-- Primary Account: Ajay Sundaran -->
+      <div onclick="selectAccount('Ajay Sundaran', 'ajaysundaran@gmail.com', 'AS', 'goog_usr_ajaysundaran_01')" class="account-row px-4 py-3 flex items-center gap-3 cursor-pointer">
+        <div class="w-10 h-10 rounded-full bg-[#1a73e8] text-white flex items-center justify-center font-medium text-sm shrink-0 shadow-sm">
+          A
+        </div>
+        <div class="flex flex-col min-w-0 flex-1">
+          <span class="text-sm font-medium text-[#202124] truncate">Ajay Sundaran</span>
+          <span class="text-xs text-[#5f6368] truncate">ajaysundaran@gmail.com</span>
+        </div>
+        <span class="text-[11px] font-medium text-[#137333] bg-[#e6f4ea] px-2 py-0.5 rounded-full shrink-0">
+          Signed in
+        </span>
+      </div>
+
+      <!-- Secondary Account -->
+      <div onclick="selectAccount('Ajay Sundaran', 'ajay.sundaran@outlook.com', 'AS', 'goog_usr_ajaysundaran_02')" class="account-row px-4 py-3 flex items-center gap-3 cursor-pointer">
+        <div class="w-10 h-10 rounded-full bg-[#0078d4] text-white flex items-center justify-center font-medium text-sm shrink-0 shadow-sm">
+          AS
+        </div>
+        <div class="flex flex-col min-w-0 flex-1">
+          <span class="text-sm font-medium text-[#202124] truncate">Ajay Sundaran</span>
+          <span class="text-xs text-[#5f6368] truncate">ajay.sundaran@outlook.com</span>
+        </div>
+        <span class="text-[11px] text-[#5f6368] shrink-0 font-medium">
+          Personal
+        </span>
+      </div>
+
+      <!-- Use Another Account Row -->
+      <div onclick="toggleAnotherAccountInput()" class="account-row px-4 py-3.5 flex items-center gap-3 cursor-pointer group">
+        <div class="w-10 h-10 rounded-full bg-transparent border border-[#dadce0] text-[#5f6368] group-hover:text-[#1a73e8] group-hover:border-[#1a73e8] flex items-center justify-center shrink-0 transition-colors">
+          <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+          </svg>
+        </div>
+        <div class="flex flex-col min-w-0 flex-1">
+          <span class="text-sm font-medium text-[#3c4043] group-hover:text-[#1a73e8] transition-colors">Use another account</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hidden Form for Another Account -->
+    <div id="another-account-box" class="hidden mb-4 p-4 border border-[#dadce0] rounded-lg bg-[#f8f9fa] flex flex-col gap-3">
+      <div class="flex flex-col gap-1">
+        <label for="custom-email" class="text-xs font-medium text-[#5f6368]">Enter your Google email address</label>
+        <input type="email" id="custom-email" placeholder="email@gmail.com" class="w-full h-10 px-3 border border-[#dadce0] rounded text-sm text-[#202124] focus:outline-none focus:border-[#1a73e8] bg-white">
+      </div>
+      <button type="button" onclick="submitCustomAccount()" class="w-full h-9 bg-[#1a73e8] hover:bg-[#155724] text-white font-medium text-xs rounded transition-colors cursor-pointer">
+        Next
+      </button>
+    </div>
+
+    <!-- Privacy Disclaimer -->
+    <p class="text-xs text-[#5f6368] leading-relaxed">
+      To continue, Google will share your name, email address, language preference, and profile picture with SECURE PARTS®. Before using this app, you can review SECURE PARTS®'s <a href="index.html" target="_blank" class="text-[#1a73e8] hover:underline">privacy policy</a> and <a href="index.html" target="_blank" class="text-[#1a73e8] hover:underline">terms of service</a>.
+    </p>
+  </div>
+
+  <!-- Footer Links -->
+  <div class="w-full max-w-md mx-auto pt-6 flex items-center justify-between text-xs text-[#5f6368]">
+    <div class="flex items-center gap-1">
+      <span>English (United States)</span>
+    </div>
+    <div class="flex items-center gap-4">
+      <a href="https://support.google.com/accounts" target="_blank" class="hover:text-[#202124]">Help</a>
+      <a href="https://policies.google.com/privacy" target="_blank" class="hover:text-[#202124]">Privacy</a>
+      <a href="https://policies.google.com/terms" target="_blank" class="hover:text-[#202124]">Terms</a>
+    </div>
+  </div>
+
+  <script>
+    function selectAccount(name, email, avatar, googleId) {
+      const payload = {
+        type: 'GOOGLE_SIGNIN_SUCCESS',
+        user: {
+          name: name,
+          email: email,
+          avatar: avatar || 'G',
+          google_id: googleId || ('goog_' + Math.random().toString(36).substring(2, 12))
+        }
+      };
+
+      // Send to opener window
+      if (window.opener && !window.opener.closed) {
+        window.opener.postMessage(payload, '*');
+        window.close();
+      } else {
+        // Fallback: store in sessionStorage and redirect
+        sessionStorage.setItem('secureparts_user', JSON.stringify({
+          name: name,
+          email: email,
+          organization: 'Google Workspace',
+          clearance: 'Google SSO Verified'
+        }));
+        window.location.href = 'index.html';
+      }
+    }
+
+    function toggleAnotherAccountInput() {
+      const box = document.getElementById('another-account-box');
+      if (box) {
+        box.classList.toggle('hidden');
+        if (!box.classList.contains('hidden')) {
+          document.getElementById('custom-email').focus();
+        }
+      }
+    }
+
+    function submitCustomAccount() {
+      const input = document.getElementById('custom-email');
+      const email = input ? input.value.trim() : '';
+      if (!email || !email.includes('@')) {
+        alert('Please enter a valid Google email address.');
+        return;
+      }
+      const name = email.split('@')[0].replace(/[\._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      selectAccount(name, email, name.charAt(0).toUpperCase(), 'goog_' + Math.random().toString(36).substring(2, 10));
+    }
+
+    // Handle Enter key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        const input = document.getElementById('custom-email');
+        if (input && document.activeElement === input) {
+          submitCustomAccount();
+        }
+      }
+    });
+  </script>
+</body>
+</html>
