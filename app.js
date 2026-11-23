@@ -970,9 +970,9 @@ const UsersDatabase = {
    OFFICIAL GOOGLE IDENTITY SERVICES (GIS) ENGINE
    ========================================================================== */
 const GoogleAuthService = {
-  CLIENT_ID: 'YOUR_GOOGLE_CLIENT_ID_HERE',
+  CLIENT_ID: '144053674609-jhd26535uaq6k1rfan6286g7ovvt4jp3.apps.googleusercontent.com',
 
-  init() {
+  init(retries = 15) {
     if (window.google && window.google.accounts && window.google.accounts.id) {
       if (this.CLIENT_ID && !this.CLIENT_ID.includes('YOUR_GOOGLE_CLIENT_ID')) {
         try {
@@ -1000,6 +1000,8 @@ const GoogleAuthService = {
           console.warn('Google GIS error:', e);
         }
       }
+    } else if (retries > 0) {
+      setTimeout(() => this.init(retries - 1), 250);
     }
   }
 };
